@@ -1,0 +1,17 @@
+Package: maptrack3d
+Type: Package
+Title: Draw 3d maps from SRTM data
+Version: 0.9.0
+Date: 2018-07-05
+Author: Craig Mohn
+Maintainer: Craig Mohn <craig.mohn.projects@gmail.com>
+Depends: R (>= 3.3.0)
+Imports: tidyverse, raster, sp, rgdal, rgeos, sf, velox, cleangeo, tigris, 
+    rmapshaper, OpenStreetMap, rgl, htmlwidgets, viridis, scico, pals, methods,
+    gplots, stringr
+Description: Functions to draw 3d maps and paths on them incorporating US TIGER
+    and Statistics Canada data to draw towns, water and roads.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.0.1
