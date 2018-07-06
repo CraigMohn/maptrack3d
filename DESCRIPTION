@@ -11,7 +11,7 @@ Imports: tidyverse, raster, sp, rgdal, rgeos, sf, velox, cleangeo, tigris,
     gplots, stringr
 Description: Functions to draw 3d maps and paths on them incorporating US TIGER
     and Statistics Canada data to draw towns, water and roads.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
