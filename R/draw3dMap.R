@@ -313,9 +313,10 @@ draw3dMap <- function(paths=NULL,
     }
     if (!is.null(mapWindow) | !is.null(USParkvec) | !is.null(cropbox)) {
       if (!silent) print("cropping")
-      if (!silent) print(paste0("  ",round(system.time(
+      temptime <- round(system.time(
         elevations <- quickmask(elevations,mapshape,rectangle=TRUE)
-      )[[3]],digits=2)))
+      )[[3]],digits=2)
+      if (!silent) print(paste0("  ",temptime))
     }
   }  else {
     elevations <- loadMapElevData(mapshape=mapshape,mapDataDir=mapDataDir,
@@ -336,14 +337,13 @@ draw3dMap <- function(paths=NULL,
                     fname=elevfname,
                     noisy=noisy,silent=silent)
     if (writeImageFile) {
-      imageFilename <- imageForRasters(rasterFileSetName=elevfname,
-                                       rasterDir=rasterDir,
-                                       imageSource=rglColorScheme)   
+      imageForRasters(rasterFileSetName=elevfname,
+                      rasterDir=rasterDir,
+                      imageSource=rglColorScheme)   
     }
   } else {
     elevfname <- "error"
   }
-  
   ###  load or create feature rasterStack, saving if necessary
   featureStack <- NULL
   if (featureDataSource=="Raster") {
@@ -356,9 +356,10 @@ draw3dMap <- function(paths=NULL,
                                          noisy=noisy,silent=silent)
     if (!is.null(mapWindow) | !is.null(USParkvec) | !is.null(cropbox)) {
       if (!silent) print("cropping")
-      if (!silent) print(paste0("  ",round(system.time(
+      temptime <- round(system.time(
         featureStack <- quickmask(featureStack,mapshape,rectangle=TRUE)
-      )[[3]],digits=2)))
+      )[[3]],digits=2)
+      if (!silent) print(paste0("  ",temptime))
     }
     if (rewriteRasters) {
       if (!is.null(rasterFileSetWriteName)) {
@@ -440,10 +441,11 @@ draw3dMap <- function(paths=NULL,
                         (as.double(elevations@nrows)/res3dplot)))
   if (!silent) print(paste0("scaling raster down by a factor of ",sfact))
   if (sfact > 1)
-    if (!silent) print(system.time(
+    temptime <- system.time(
       elevations <- raster::aggregate(elevations,fact=sfact,fun=max,
                                       expand=TRUE,na.rm=TRUE)
-    )[[3]])
+    )[[3]]
+    if (!silent) print(paste0(" ",temptime))
   if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
 
   if ( featureDataSource %in% c("Shapefiles","TIGER") &
@@ -455,10 +457,12 @@ draw3dMap <- function(paths=NULL,
   }
   ##  need to mask if not a rectangle - whole states/provinces/countries are masked already,
   ##     so only need to worry about Parks
-  if (is.null(mapWindow) & !rectangularMap & !is.null(USParkvec))
-    if (!silent) print(paste0("  ",round(system.time(
+  if (is.null(mapWindow) & !rectangularMap & !is.null(USParkvec)) {
+    temptime <- round(system.time(
       elevations <- quickmask(elevations,mapshape,rectangle=FALSE)
-    )[[3]],digits=2)," masking"))
+    )[[3]],digits=2)
+    if (!silent) print(paste0("  ",temptime," masking"))
+  }
   if (useImageRaster) {
     imageRaster <- loadSavedImageData(savedNameVec=savedRasterVec,
                                       rasterDir=rasterDir,

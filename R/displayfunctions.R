@@ -100,7 +100,6 @@ draw3DMapTrack <- function(mapRaster,
     #  appear dead  "nps","maptoolkit-topo"
     mapImage <- getMapImageRaster(elevations,
                                   mapImageType=rglColorScheme,
-                                  imageFilename=imageFilename,
                                   silent=silent) 
     col <- t(matrix(
              mapply(rgb2hex,as.vector(mapImage[[1]]),
@@ -309,39 +308,33 @@ pan3d <- function(button) {
   cat("Callbacks set on button", button, "of rgl device", rgl.cur(), "\n")
 }
 getMapImageRaster <- function(mapRaster,mapImageType="bing",
-                              imageFilename=NULL,silent=FALSE) {
+                              silent=FALSE) {
   if (grepl("+proj=longlat",crs(mapRaster,asText=TRUE))) {
     llextent <- raster::extent(mapRaster) 
   } else {
     llextent <- raster::extent(raster::projectExtent(mapRaster,
         crs="+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 +no_defs")) 
   }
-  if (is.null(imageFilename)) {
-    upperLeft <-c(llextent[4],llextent[1])
-    lowerRight <-c(llextent[3],llextent[2])
-    # calculate zoom based on width/pixel
-    metersPerPixel <- rasterHeight(raster::extent(mapRaster)[1],
-                                  raster::extent(mapRaster)[2],
-                                  raster::extent(mapRaster)[3],
-                                  raster::extent(mapRaster)[4],
-                                  lonlat=grepl("+proj=longlat",
-                                               crs(mapRaster,asText=TRUE)) 
+  upperLeft <-c(llextent[4],llextent[1])
+  lowerRight <-c(llextent[3],llextent[2])
+  # calculate zoom based on width/pixel
+  metersPerPixel <- rasterHeight(raster::extent(mapRaster)[1],
+                                 raster::extent(mapRaster)[2],
+                                 raster::extent(mapRaster)[3],
+                                 raster::extent(mapRaster)[4],
+                                 lonlat=grepl("+proj=longlat",
+                                              crs(mapRaster,asText=TRUE)) 
                                   ) / ncol(mapRaster)
-    zoomcalc <- 13 - floor(max(log2(metersPerPixel/20),0))                   
-    if (!silent) print(paste0("downloading ",mapImageType," map tiles, zoom = ",zoomcalc))
-    mapImage <- OpenStreetMap::openmap(upperLeft,lowerRight,
+  zoomcalc <- 13 - floor(max(log2(metersPerPixel/20),0))                   
+  if (!silent) print(paste0("downloading ",mapImageType," map tiles, zoom = ",zoomcalc))
+  mapImage <- OpenStreetMap::openmap(upperLeft,lowerRight,
                                      zoom=zoomcalc,type=mapImageType) 
-    gc()
-    if (!silent) print(paste0("projecting ",mapImageType," map tiles"))
-    mapImage <- OpenStreetMap::openproj(mapImage,
-                                        projection=raster::crs(mapRaster)) 
-    mapImage <- raster::raster(mapImage)
-    if (!silent) print(paste0("resampling ",mapImageType," map tiles")) 
-  } else {
-    mapImage <- raster::raster(imageFilename)
-    mapImage <- raster::setExtent(mapImage,llextent)
-    if (!silent) print(paste0("resampling ",imageFilename," as background image")) 
-  }
+  gc()
+  if (!silent) print(paste0("projecting ",mapImageType," map tiles"))
+  mapImage <- OpenStreetMap::openproj(mapImage,
+                                      projection=raster::crs(mapRaster)) 
+  mapImage <- raster::raster(mapImage)
+  if (!silent) print(paste0("resampling ",mapImageType," map tiles")) 
   mapImage <- raster::resample(mapImage,mapRaster) 
   return(mapImage)
 } 
