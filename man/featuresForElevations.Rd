@@ -2,7 +2,7 @@
 % Please edit documentation in R/featuresForElevations.R
 \name{featuresForElevations}
 \alias{featuresForElevations}
-\title{create and save the laters of a rasterStack containing the feature data for 
+\title{create and save the layers of a rasterStack containing the feature data for 
   an elevation raster}
 \usage{
 featuresForElevations(rasterFileSetName, rasterDir, shapefileDir = NULL,
@@ -13,7 +13,8 @@ featuresForElevations(rasterFileSetName, rasterDir, shapefileDir = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   mapbuffer = 0, mapmergebuffer = 0, sliceFeatureBuffer = 0,
   maxRasterize = 1e+05, polyClean = FALSE, polySimplify = 0,
-  polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04, ...)
+  polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04,
+  silent = FALSE, noisy = FALSE, ...)
 }
 \arguments{
 \item{rasterFileSetName}{vector of names of saved raster data files}
@@ -67,6 +68,10 @@ for rmapshaper::ms_simplify}
 \item{polyWeighting}{see help for rmapshaper::ms_simplify}
 
 \item{polySnapInt}{see help for rmapshaper::ms_simplify}
+
+\item{silent}{logical, suppress most output}
+
+\item{noisy}{logical, more output to track progress}
 
 \item{...}{values passed through}
 }

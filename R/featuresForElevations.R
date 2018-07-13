@@ -66,7 +66,7 @@ elevationsToRaster <- function(rasterFileSetName="default",
                    maxrastercells=maxrastercells))
   
 }
-#' create and save the laters of a rasterStack containing the feature data for 
+#' create and save the layers of a rasterStack containing the feature data for 
 #'   an elevation raster
 #'
 #' \code{featuresForElevations} create and save the laters of a rasterStack 
@@ -104,6 +104,9 @@ elevationsToRaster <- function(rasterFileSetName="default",
 #' @param polyWeighting see help for rmapshaper::ms_simplify 
 #' @param polySnapInt see help for rmapshaper::ms_simplify
 #' @param ... values passed through
+#' 
+#' @param silent logical, suppress most output
+#' @param noisy logical, more output to track progress 
 #'
 #' @return NULL
 #'
@@ -123,7 +126,8 @@ featuresForElevations <- function(rasterFileSetName,
                                   maxRasterize=100000,
                                   polyClean=FALSE,
                                   polySimplify=0.0,polyMethod="vis", 
-                                  polyWeighting=0.85,polySnapInt=0.0001,...) {
+                                  polyWeighting=0.85,polySnapInt=0.0001,
+                                  silent=FALSE,noisy=FALSE,...) {
   #   build mapshape
   mapshape <- mapMask(USStatevec=USStatevec,CAProvincevec=CAProvincevec,
                       USParkvec=NULL,worldCountryvec=NULL,
@@ -155,7 +159,7 @@ featuresForElevations <- function(rasterFileSetName,
     fname <- sub(paste0(rasterFileSetName,"elevs"),
                  paste0(rasterFileSetName,"features"),
                  sub(".grd","",fn))
-    print(paste0("loading ",fn))
+    if (!silent) print(paste0("loading ",fn))
     elevations <- raster(paste0(rasterDir,"/",rasterFileSetName,"/",fn))
     featureStack <- buildFeatureStack(elevations,mapshape=mapshape,
                                       spList=spList,
@@ -164,8 +168,9 @@ featuresForElevations <- function(rasterFileSetName,
                                       polySimplify=polySimplify,
                                       polyMethod=polyMethod, 
                                       polyWeighting=polyWeighting,
-                                      polySnapInt=polySnapInt)
-    print(paste0("writing ",fname,".grd"))
+                                      polySnapInt=polySnapInt,
+                                      silent=silent,noisy=noisy)
+    if (!silent) print(paste0("writing ",fname,".grd"))
     writeRaster(featureStack,
                 filename=paste0(rasterDir,"/",rasterFileSetName,"/",
                                 fname,
@@ -177,4 +182,41 @@ featuresForElevations <- function(rasterFileSetName,
   }
   return(NULL)
 }
+#' create and save a rasterLayer containing the image data fetched by 
+#'   openStreetmaps for an elevation raster
+#'
+#' \code{ImageForElevations} create and save the laters of a rasterStack 
+#'   containing the feature data for an elevation raster
+#'
+#' @param rasterFileSetName vector of names of saved raster data files
+#' @param rasterDir location to load and save raster files
+#' @param imageSource string containing name for OpenStreetMap map type
+#'    from c("bing","maptoolkit-topo","nps","apple-iphoto") 
+#'
+#' @return NULL
+#'
+#' @export
+imageForRasters <- function(rasterFileSetName,
+                            rasterDir,imageSource) {
+  fvec <- list.files(path=paste0(rasterDir,"/",rasterFileSetName),
+                     pattern=paste0(rasterFileSetName,"elevs[0-9]{,2}.grd"))
+  for (fn in fvec) {
+    fname <- sub(paste0(rasterFileSetName,"elevs"),
+                 paste0(rasterFileSetName,imageSource),
+                 sub(".grd","",fn))
+    print(paste0("loading ",fn))
+    elevations <- raster(paste0(rasterDir,"/",rasterFileSetName,"/",fn))
+    imageRaster <- getMapImageRaster(mapRaster=elevations,
+                                     mapImageType=imageSource)
+    print(paste0("writing ",fname,".grd"))
+    writeRaster(imageRaster,
+                filename=paste0(rasterDir,"/",rasterFileSetName,"/",
+                                fname,
+                                ".grd"),
+                overwrite=TRUE)   
+    gc()
+  }
+  return(NULL)
   
+}  
+

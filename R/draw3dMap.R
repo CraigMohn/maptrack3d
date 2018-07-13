@@ -26,7 +26,7 @@
 #'    use in defining map or finding features to include in the map
 #' @param USParkvec vector of US National Park names.  If specified, map
 #'    will include the specified Parks but not the listed US states
-#' @param parkDir location of downloaded US Park boundary shapefiles 
+#' @param parkDir string location of downloaded US Park boundary shapefiles 
 #'    downloaded from, for example, https://irma.nps.gov/DataStore/ 
 #' @param worldCountryvec vector of 3-letter ISO country abbreviations 
 #' @param mapbuffer numeric value to expand defined map
@@ -35,48 +35,54 @@
 #'    boundary inconsistencies
 #' @param cropbox vector of 4 numbers for cropping the map defined above
 #'    The format is c(lon_min, lon_max, lat_min, lat_max).
-#' @param rectangularMap draw the entire rectangle enclosing the specified
+#' @param rectangularMap logical, draw the entire rectangle enclosing the specified
 #'    map area, as long as all relevant state/province rasters have been loaded
 #'
-#' @param elevDataSource "SRTM" to load data from saved SRTM data, 
+#' @param elevDataSource character, "SRTM" to load data from saved SRTM data, 
 #'    "Raster" to load saved raster files
-#' @param mapDataDir directory where zipped SRTM data files reside
-#' @param resstr suffix on SRTM data files after lon/lat info
+#' @param mapDataDir character, directory where zipped SRTM data files reside
+#' @param resstr character, suffix on SRTM data files after lon/lat info
 #' @param rasterFileSetNames vector of names of saved raster data files
 #' 
-#' @param featureDataSource "Shapefiles" to load saved shapefiles, "TIGER"
-#'    to fetch TIGER data for US states, "Raster" to load saved raster data
+#' @param featureDataSource character, "Shapefiles" to load saved shapefiles, 
+#'    "TIGER" to fetch TIGER data for US states, "Raster" to load saved raster data
 #'    from directory specified 
-#' @param shapefileDir location to load/save shapefiles
-#' @param writeShapefiles write/overwrite shapefiles if TIGER data is used
+#' @param shapefileDir character location to load/save shapefiles
+#' @param writeShapefiles logical, write/overwrite shapefiles if TIGER data is used
 #' @param year numeric year to use in calls for map boundaries/features
-#' @param includeAllRoads include all roads in shapefile, not just highways
-#' @param zeroBufferTowns use zero buffer trick to repair town polygon shapefile
-#' @param zeroBufferWater use zero buffer trick to repair water polygon shapefile
-
-#' @param writeElevFile save the elevation raster files 
-#' @param writeFeatureFile save the feature data raster files
-#' @param rasterDir location to load and save raster files
+#' @param includeAllRoads logical, include all roads in shapefile, not just highways
+#' @param zeroBufferTowns logical, use zero buffer trick to repair town polygon shapefile
+#' @param zeroBufferWater logical, use zero buffer trick to repair water polygon shapefile
+#' 
+#' @param useImageRaster logical, use the image raster from saved openStreetmap 
+#'    colrings of the map surface
+#' 
+#' @param writeElevFile logical, save the elevation raster files 
+#' @param writeFeatureFile logical, save the feature data raster files
+#' @param writeImageFile logical, save the "bing","apple-iphoto","stamen-terrain"
+#'    images specified in rglColorScheme as a raster file
+#' @param imageFilename name of raster or tiff file containing map background    
+#' @param rasterDir character location to load and save raster files
 #' @param rasterFileSetWriteName name to use for the raster fileset written
 
-#' @param drawRGL if TRUE, open a window with the interactive 3D map
-#' @param res3dplot used to scale resolution, the maximum size the square root
+#' @param drawRGL logical, open a window with the interactive 3D map
+#' @param res3dplot numeric, used to scale resolution, the maximum size the square root
 #'    of the output height times width.  aggregation done in integer multiples.
 #' @param drawProj4 string containing the projection to use in drawing the map,
 #'    "UTM" (zone based on center of map),"Lambert","Albers", or any Proj4 string
-#' @param maxElev all elevations greater than this are colored the same
-#' @param vScale vertical scale parameter, use larger for smaller areas
-#' @param townLevel display towns ranked this number or higher: 
+#' @param maxElev numeric, all elevations greater than this are colored the same
+#' @param vScale numeric vertical scale parameter, try bigger values for smaller areas
+#' @param townLevel numeric, display towns ranked this number or higher: 
 #'    3=all towns     5=larger towns (in US >50k)
-#' @param roadLevel display roads ranked this number or higher:
+#' @param roadLevel numeric, display roads ranked this number or higher:
 #'    2=Service Drive, Bike Path, etc      3=Local Street
 #'    4=Secondary Hwy                      5=Primary Hwy/Transit
-#' @param waterALevel display areal water ranked this number or higher:
+#' @param waterALevel numeric, display areal water ranked this number or higher:
 #'    2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
 #'    4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
 #'    6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
 #'    8=glacier
-#' @param waterLLevel display linear water ranked this number or higher:
+#' @param waterLLevel numeric, display linear water ranked this number or higher:
 #'    2=canal/ditch                        3=braided stream
 #'    4=stream/river                       5=named stream/river
 #'    6=named stream/river containing the string "RIV"
@@ -85,39 +91,96 @@
 #'       "desert","lajolla","niccoli","bright",
 #'       "bing","maptoolkit-topo","nps","apple-iphoto")
 #' @param mapColorDepth number of bits per color channel in map image
-#' @param rglNAcolor color used to display NA elevations
-#' @param rglNegcolor color used to display elevations below sea level
-#' @param citycolor color used to display cities
-#' @param watercolor color used to display water,
-#' @param roadcolor color used to display roads
-#' @param glaciercolor color used to display glaciers
+#' @param rglNAcolor character, color used to display NA elevations
+#' @param rglNegcolor character, color used to display elevations below sea level
+#' @param citycolor character, color used to display cities
+#' @param watercolor character, color used to display water,
+#' @param roadcolor character, color used to display roads
+#' @param glaciercolor character, color used to display glaciers
 #' @param rglShininess number controlling surface shininess in rgl rendering
-#' @param rglSpecular light color for specular light
-#' @param rglDiffuse light color for diffuse light
-#' @param rglAmbient light color for ambient light
-#' @param rglEmission color of emitted light 
-#' @param rglSmooth use Gouraud shading if TRUE
-#' @param rglAlpha alpha value for surface
-#' @param rglAntiAlias antialias points and lines when drawing surface
-#' @param rglTheta coordinate for light source
-#' @param rglPhi coordinate for light source
-#' @param saveRGL save the map to an html file
-#' @param mapoutputdir location for saved html map file
+#' @param rglSpecular character, light color for specular light
+#' @param rglDiffuse character, light color for diffuse light
+#' @param rglAmbient character, light color for ambient light
+#' @param rglEmission character, color of emitted light 
+#' @param rglSmooth logical, use Gouraud shading if TRUE
+#' @param rglAlpha numeric alpha value for surface
+#' @param rglAntiAlias logical, antialias points and lines when drawing surface
+#' @param rglTheta numeric coordinate for light source
+#' @param rglPhi numeric coordinate for light source
+#' @param saveRGL logical, save the map to an html file
+#' @param mapoutputdir character location for saved html map file
 #' @param outputName name of saved html map
-
-#' @param workProj4 coordinte reference projection string
+#' 
+#' @param workProj4 coordinate reference projection string
 #' @param maxrastercells maximum number of cells in each written raster
-#' @param maxRasterize number of items for calls to velox$rasterize
-#' @param polySimplify amount of polygon simplification, see help
+#' @param maxRasterize number of number of items for calls to velox$rasterize
+#' @param polySimplify numeric, amount of polygon simplification, see help
 #'    for rmapshaper::ms_simplify 
 #' @param polyMethod simplification method either "vis" or "dp"
 #' @param polyWeighting see help for rmapshaper::ms_simplify 
 #' @param polySnapInt see help for rmapshaper::ms_simplify
-
-#' @param silent suppress most output
-#' @param noisy more output to track progress 
-
+#' 
+#' @param silent logical, suppress most output
+#' @param noisy logical, more output to track progress 
+#' 
 #' @return NULL
+#' 
+#' @examples 
+#' \dontrun{
+#' ##  draw a rectangular region from local SRTM data
+#' ##    to download the data, start at https://earthexplorer.usgs.gov/ ,
+#' ##    create a free account and order the data you need
+#' ##    put it into mapDataDir
+#' mapWindow <- c(23.3,27.4,34.7,36.0)  # Crete
+#' draw3dMap(mapWindow=mapWindow,
+#'           mapDataDir="c:/bda/Europe 1s",
+#'           vScale=1.6,
+#'           rglColorScheme="bing",
+#'           drawProj4="UTM", 
+#'           saveRGL=TRUE,mapoutputdir=mapoutputdir,
+#'           outputName="Crete")
+#' 
+#' ##  draw US Yosemite National Park from local SRTM data
+#' draw3dMap(USParkvec="YOSE",USStatevec="CA",
+#'           parkDir=parkDir,mapbuffer=10000,
+#'           mapDataDir=mapDataDir,
+#'           shapefileDir=shapefileDir,
+#'           featureDataSource="shapefiles",
+#'           townLevel=3,roadLevel=2,waterALevel=4,waterLLevel=5,
+#'           vScale=1.5,
+#'           rglColorScheme="terrain",
+#'           drawProj4="UTM",
+#'           saveRGL=TRUE,mapoutputdir=mapoutputdir,
+#'           outputName="Yosemite")
+#' ##  draw US Yosemite National Park from CGIAR hosted SRTM data
+#' draw3dMap(USParkvec="YOSE",USStatevec="CA",
+#'           parkDir=parkDir,mapbuffer=10000,
+#'           vScale=1.5,
+#'           rglColorScheme="bing",
+#'           drawProj4="UTM", 
+#'           saveRGL=TRUE,mapoutputdir=mapoutputdir,
+#'           outputName="Yosemite CGIAR bing")
+#' ##  draw US Yosemite National Park from CGIAR hosted SRTM data and TIGER data
+#' draw3dMap(USParkvec="YOSE",USStatevec="CA",
+#'           parkDir=parkDir,mapbuffer=10000,
+#'           shapefileDir=shapefileDir,
+#'           featureDataSource="shapefiles",
+#'           townLevel=3,roadLevel=2,waterALevel=4,waterLLevel=5,
+#'           vScale=1.5,
+#'           rglColorScheme="bing",
+#'           drawProj4="UTM",
+#'           saveRGL=TRUE,mapoutputdir=mapoutputdir,
+#'           outputName="Yosemite CGIAR bing TIGER")
+#' ## draw mainland Portugal from CGIAR hosted data
+#' draw3dMap(worldCountryvec="PRT",
+#'           cropbox=c(-10, 10, 36, 43), # remove islands
+#'           mapbuffer=100, # expand boundary to speed masking
+#'           vScale=1.4,    # increase scale with bing coloring
+#'           rglColorScheme="bing",
+#'           drawProj4="Albers", 
+#'           saveRGL=TRUE,mapoutputdir=mapoutputdir,
+#'           outputName="Portugal Albers bing")
+#' }
 #'
 #' @export
 draw3dMap <- function(paths=NULL,
@@ -133,13 +196,15 @@ draw3dMap <- function(paths=NULL,
                       mapDataDir=NULL,resstr="_1arc_v3_bil",
                       rasterFileSetNames=NULL,
                       #  water/town/road features
-                      featureDataSource="Shapefiles",
+                      featureDataSource="none",
                       shapefileDir=NULL,writeShapefiles=TRUE,
                       year=2017,includeAllRoads=FALSE,
                       zeroBufferTowns=FALSE,
                       zeroBufferWater=FALSE,
+                      useImageRaster=FALSE,
                       #  raster save and location parameters
                       writeElevFile=FALSE,writeFeatureFile=FALSE,
+                      writeImageFile=FALSE,imageFilename=NULL,
                       rasterDir=NULL,rasterFileSetWriteName=NULL,
                       #  plotting control
                       drawRGL=TRUE,
@@ -164,10 +229,10 @@ draw3dMap <- function(paths=NULL,
                       maxrastercells=250000000,maxRasterize=500000,
                       polySimplify=0.0,polyMethod="vis", 
                       polyWeighting=0.85,polySnapInt=0.0001,
-                      silent=FALSE,noisy=TRUE) {
+                      silent=FALSE,noisy=FALSE) {
 
   elevDataSource <- argCaseFix(elevDataSource,c("Raster","SRTM"))
-  featureDataSource <- argCaseFix(featureDataSource,c("Raster","Shapefiles","TIGER"))
+  featureDataSource <- argCaseFix(featureDataSource,c("Raster","Shapefiles","TIGER","none"))
 
   filterList <- list("spTown"=townLevel,
                      "spRoads"=roadLevel,
@@ -203,27 +268,30 @@ draw3dMap <- function(paths=NULL,
  
   #############################################################################
   ####    set up masking map shape
-  mapshape <- mapMask(USStatevec=USStatevec,
-                      CAProvincevec=CAProvincevec,
-                      USParkvec=USParkvec,
-                      worldCountryvec=worldCountryvec,
-                      mapWindow=mapWindow,
-                      mapbuffer=mapbuffer,
-                      mapmergebuffer=mapmergebuffer,
-                      parkDir=parkDir,
-                      workProj4=workProj4,
-                      year=year)
-  #   now crop the map to the cropbox 
-  if (!is.null(cropbox)) {
-    if (writeElevFile | writeFeatureFile | writeShapefiles) 
-      warning("cropping map when saving raster/shapefiles.")
-    CP <- as(raster::extent(cropbox), "SpatialPolygons")
-    sp::proj4string(CP) <- CRS(sp::proj4string(mapshape))
-    mapshape <- rgeos::gIntersection(mapshape, CP, byid=TRUE)
+  getMap <- !is.null(USStatevec) | !is.null(CAProvincevec) |
+            !is.null(USParkvec) | !is.null(worldCountryvec) |
+            !is.null(mapWindow) 
+  if (getMap) {
+    mapshape <- mapMask(USStatevec=USStatevec,
+                        CAProvincevec=CAProvincevec,
+                        USParkvec=USParkvec,
+                        worldCountryvec=worldCountryvec,
+                        mapWindow=mapWindow,
+                        mapbuffer=mapbuffer,
+                        mapmergebuffer=mapmergebuffer,
+                        parkDir=parkDir,
+                        workProj4=workProj4,
+                        year=year)
+    if (!is.null(cropbox)) {
+      if (writeElevFile | writeFeatureFile | writeShapefiles) 
+        warning("cropping map when saving raster/shapefiles.")
+      CP <- as(raster::extent(cropbox), "SpatialPolygons")
+      sp::proj4string(CP) <- CRS(sp::proj4string(mapshape))
+      mapshape <- rgeos::gIntersection(mapshape, CP, byid=TRUE)
+    }
+    if (!silent) plot(mapshape) # which has CRS=workproj4
+    if (noisy) print(mapshape)
   }
-  if (!silent) plot(mapshape) # which has CRS=workproj4
-  if (noisy) print(mapshape)
-  
   #############################################################################
   ###    load or build elevations raster, crop it to mapshape
   if (elevDataSource=="Raster") {
@@ -233,17 +301,26 @@ draw3dMap <- function(paths=NULL,
       savedRasterVec <- statesInMap
     }
     elevations <- loadSavedElevData(savedRasterVec,rasterDir,
-                                    noisy=noisy,silent=silent) 
+                                    noisy=noisy,silent=silent)
+    if (!getMap) {
+      # if map area wasn't specified above, use extent of raster
+      mapshape <- as(raster::extent(elevations),"SpatialPolygons")
+      if (!is.null(cropbox)) {
+        CP <- as(raster::extent(cropbox), "SpatialPolygons")
+        sp::proj4string(CP) <- CRS(sp::proj4string(mapshape))
+        mapshape <- rgeos::gIntersection(mapshape, CP, byid=TRUE)
+      }
+    }
     if (!is.null(mapWindow) | !is.null(USParkvec) | !is.null(cropbox)) {
-      print("cropping")
-      print(paste0("  ",round(system.time(
+      if (!silent) print("cropping")
+      if (!silent) print(paste0("  ",round(system.time(
         elevations <- quickmask(elevations,mapshape,rectangle=TRUE)
       )[[3]],digits=2)))
     }
   }  else {
-    elevations <- loadMapElevData(mapshape,mapDataDir,resstr,
-                                  noisy=noisy,silent=silent)
-    #  raster should be masked
+    elevations <- loadMapElevData(mapshape=mapshape,mapDataDir=mapDataDir,
+                                  resstr=resstr,noisy=noisy,silent=silent)
+    #  raster is masked
   }
   
   ###   and write out the elevation raster if requested
@@ -258,6 +335,11 @@ draw3dMap <- function(paths=NULL,
                     rasterDir=rasterDir,
                     fname=elevfname,
                     noisy=noisy,silent=silent)
+    if (writeImageFile) {
+      imageFilename <- imageForRasters(rasterFileSetName=elevfname,
+                                       rasterDir=rasterDir,
+                                       imageSource=rglColorScheme)   
+    }
   } else {
     elevfname <- "error"
   }
@@ -273,8 +355,8 @@ draw3dMap <- function(paths=NULL,
     featureStack <- loadSavedFeatureData(savedNameVec,rasterDir,
                                          noisy=noisy,silent=silent)
     if (!is.null(mapWindow) | !is.null(USParkvec) | !is.null(cropbox)) {
-      print("cropping")
-      print(paste0("  ",round(system.time(
+      if (!silent) print("cropping")
+      if (!silent) print(paste0("  ",round(system.time(
         featureStack <- quickmask(featureStack,mapshape,rectangle=TRUE)
       )[[3]],digits=2)))
     }
@@ -306,7 +388,8 @@ draw3dMap <- function(paths=NULL,
                             polySimplify=polySimplify,
                             polyMethod=polyMethod, 
                             polyWeighting=polyWeighting,
-                            polySnapInt=polySnapInt)
+                            polySnapInt=polySnapInt,
+                            noisy=noisy,silent=silent)
       featureStack <- loadSavedFeatureData(elevfname,rasterDir)
     } else {
       spList <- loadShapeFiles(USStatevec=USStatevec,
@@ -328,13 +411,14 @@ draw3dMap <- function(paths=NULL,
                                           polySimplify=polySimplify,
                                           polyMethod=polyMethod, 
                                           polyWeighting=polyWeighting,
-                                          polySnapInt=polySnapInt)
+                                          polySnapInt=polySnapInt,
+                                          silent=silent,noisy=noisy)
         if (!is.null(rasterFileSetWriteName)) {
           featfname <- rasterFileSetWriteName
         } else {
           featfname <- paste0(statesInMap,collapse="")
         }
-        print(paste0("writing ",featfname,"features.grd"))
+        if (!silent) print(paste0("writing ",featfname,"features.grd"))
         writeRaster(featureStack,
                     filename=paste0(rasterDir,"/",featfname,"/",
                                     featfname,"features",
@@ -351,16 +435,16 @@ draw3dMap <- function(paths=NULL,
     names(elevations[[1]]) <- "elevations"
   }
   ##  rasters are cropped but not necessarily masked by this point
-  print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
+  if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
   sfact <- ceiling(sqrt((as.double(elevations@ncols)/res3dplot)*
                         (as.double(elevations@nrows)/res3dplot)))
-  print(paste0("scaling raster down by a factor of ",sfact))
+  if (!silent) print(paste0("scaling raster down by a factor of ",sfact))
   if (sfact > 1)
-    print(system.time(
+    if (!silent) print(system.time(
       elevations <- raster::aggregate(elevations,fact=sfact,fun=max,
                                       expand=TRUE,na.rm=TRUE)
     )[[3]])
-  print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
+  if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
 
   if ( featureDataSource %in% c("Shapefiles","TIGER") &
       # and we have not generated a raster for native Proj4 
@@ -372,16 +456,25 @@ draw3dMap <- function(paths=NULL,
   ##  need to mask if not a rectangle - whole states/provinces/countries are masked already,
   ##     so only need to worry about Parks
   if (is.null(mapWindow) & !rectangularMap & !is.null(USParkvec))
-    print(paste0("  ",round(system.time(
+    if (!silent) print(paste0("  ",round(system.time(
       elevations <- quickmask(elevations,mapshape,rectangle=FALSE)
     )[[3]],digits=2)," masking"))
-
+  if (useImageRaster) {
+    imageRaster <- loadSavedImageData(savedNameVec=savedRasterVec,
+                                      rasterDir=rasterDir,
+                                      imageSource=rglColorScheme,
+                                      noisy=noisy,silent=silent)
+  } else {
+    imageRaster <- NULL
+  }
   if (drawRGL)
     draw3DMapTrack(mapRaster=elevations,trackdf=paths,spList=spList,
                    featureLevels=filterList, #towns,roads,waterA,waterL
                    maxElev=maxElev,vScale=vScale,drawProj4=drawProj4,
                    rglColorScheme=rglColorScheme,
                    mapColorDepth=mapColorDepth,
+                   imageFilename=imageFilename,
+                   imageRaster=imageRaster,
                    citycolor=citycolor,roadcolor=roadcolor,
                    watercolor=watercolor,glaciercolor=glaciercolor,
                    rglNAcolor=rglNAcolor,rglNegcolor=rglNegcolor,
@@ -390,6 +483,7 @@ draw3dMap <- function(paths=NULL,
                    rglSpecular=rglSpecular,rglDiffuse=rglDiffuse,
                    rglAmbient=rglAmbient,rglEmission=rglEmission,
                    rglTheta=rglTheta,rglPhi=rglPhi,saveRGL=saveRGL,
-                   mapoutputdir=mapoutputdir,outputName=outputName) 
+                   mapoutputdir=mapoutputdir,outputName=outputName,
+                   silent=silent,noisy=noisy) 
   return(NULL)
 }

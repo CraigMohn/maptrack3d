@@ -96,10 +96,13 @@ UTMzone <- function(lon) {
   #  from stackoverflow answer by Josh O'Brien
   return((floor((lon + 180)/6) %% 60) + 1) 
 }
-CRS_LambertAzimuthalEqualArea <- function() {
-  "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs "
+CRS_LambertAzimuthalEqualArea <- function(lon,lat) {
+  paste0("+proj=laea +lat_0=",lat," +lon_0=",lon,
+         " +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs ")
 }
-CRS_AlbersEqualArea <- function() {
-  "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs "
+CRS_AlbersEqualArea <- function(lon,lat1,lat2) {
+  paste0("+proj=aea +lat_1=",lat1," +lat_2=",lat2,
+         " +lat_0=",(lat1+lat2)/2," +lon_0=",lon,
+         " +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")
 }
 

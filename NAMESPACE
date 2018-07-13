@@ -3,6 +3,7 @@
 export(draw3dMap)
 export(elevationsToRaster)
 export(featuresForElevations)
+export(imageForRasters)
 import(OpenStreetMap)
 import(cleangeo)
 import(htmlwidgets)

@@ -7,6 +7,8 @@ draw3DMapTrack <- function(mapRaster,
                            drawProj4=NULL,
                            rglColorScheme="default",
                            mapColorDepth=16,
+                           imageFilename=NULL,
+                           imageRaster=NULL,
                            citycolor="White",
                            roadcolor="Black",
                            watercolor="Blue",
@@ -28,7 +30,8 @@ draw3DMapTrack <- function(mapRaster,
                            trackCurveHeight=10,
                            saveRGL=FALSE,
                            mapoutputdir=NA,
-                           outputName="most recent") {
+                           outputName="most recent",
+                           silent=FALSE,noisy=FALSE) {
   
   if (is.null(featureLevels)) 
     featureLevels <- list("spTown"=1,
@@ -41,11 +44,14 @@ draw3DMapTrack <- function(mapRaster,
       drawProj4 <- UTMProj4(lon=(extent(mapRaster)[1]+extent(mapRaster)[2])/2,
                             lat=(extent(mapRaster)[3]+extent(mapRaster)[4])/2)
     } else if (drawProj4=="Lambert") {
-      drawProj4 <- CRS_LambertAzimuthalEqualArea()
+      drawProj4 <- CRS_LambertAzimuthalEqualArea(lon=(extent(mapRaster)[1]+extent(mapRaster)[2])/2,
+                                                 lat=(extent(mapRaster)[3]+extent(mapRaster)[4])/2)
     } else if (drawProj4=="Albers") {
-      drawProj4 <- CRS_AlbersEqualArea()
+      drawProj4 <- CRS_AlbersEqualArea(lon=(extent(mapRaster)[1]+extent(mapRaster)[2])/2,
+                                       lat1=extent(mapRaster)[3],
+                                       lat2=extent(mapRaster)[4] )
     } 
-    print(paste0("projecting raster to ",drawProj4))
+    if (!silent) print(paste0("projecting raster to ",drawProj4))
     if (is.null(spList) | (class(mapRaster)=="RasterLayer")) {
       mapRaster <- raster::projectRaster(mapRaster,crs=drawProj4,method="ngb")
     } else {
@@ -78,12 +84,24 @@ draw3DMapTrack <- function(mapRaster,
   x <- seq(1,length.out=nrow(mmmelev))
   y <- seq(1,length.out=ncol(mmmelev))
   yscale <- yRatio(elevations)
-
-  if (rglColorScheme %in% c("bing","apple-iphoto","stamen-terrain")) { 
+  
+  if (!is.null(imageRaster)) {
+    if (!is.null(drawProj4)) {
+      imageRaster <- raster::projectRaster(imageRaster,crs=drawProj4,method="ngb")
+    }
+    mapImage <- raster::crop(imageRaster,elevations)
+    col <- t(matrix(
+      mapply(rgb2hex,as.vector(mapImage[[1]]),
+             as.vector(mapImage[[2]]),as.vector(mapImage[[3]]),
+             colordepth=mapColorDepth,
+             SIMPLIFY=TRUE),
+      ncol=nrow(mmmelev),nrow=ncol(mmmelev)))
+  } else if (rglColorScheme %in% c("bing","apple-iphoto","stamen-terrain")) { 
     #  appear dead  "nps","maptoolkit-topo"
-    
     mapImage <- getMapImageRaster(elevations,
-                                  mapImageType=rglColorScheme) 
+                                  mapImageType=rglColorScheme,
+                                  imageFilename=imageFilename,
+                                  silent=silent) 
     col <- t(matrix(
              mapply(rgb2hex,as.vector(mapImage[[1]]),
               as.vector(mapImage[[2]]),as.vector(mapImage[[3]]),
@@ -201,7 +219,7 @@ draw3DMapTrack <- function(mapRaster,
   return(NULL)
 }
 terrainColors <- function(palettename="default",numshades=206) {
-  print(paste0("drawing map using ",palettename," for color"))
+  # print(paste0("drawing map using ",palettename," for color"))
   if (palettename == "beach") {
     terrcolors <- 
       colorRampPalette(c("blue","bisque1","bisque2","bisque3",
@@ -290,33 +308,40 @@ pan3d <- function(button) {
   rgl::rgl.setMouseCallbacks(button, begin, update)
   cat("Callbacks set on button", button, "of rgl device", rgl.cur(), "\n")
 }
-getMapImageRaster <- function(mapRaster,mapImageType="bing") {
+getMapImageRaster <- function(mapRaster,mapImageType="bing",
+                              imageFilename=NULL,silent=FALSE) {
   if (grepl("+proj=longlat",crs(mapRaster,asText=TRUE))) {
     llextent <- raster::extent(mapRaster) 
   } else {
     llextent <- raster::extent(raster::projectExtent(mapRaster,
         crs="+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 +no_defs")) 
   }
-  upperLeft <-c(llextent[4],llextent[1])
-  lowerRight <-c(llextent[3],llextent[2])
-  # calculate zoom based on width/pixel
-  metersPerPixel <- rasterHeight(raster::extent(mapRaster)[1],
-                                raster::extent(mapRaster)[2],
-                                raster::extent(mapRaster)[3],
-                                raster::extent(mapRaster)[4],
-                                lonlat=grepl("+proj=longlat",
-                                             crs(mapRaster,asText=TRUE)) 
-                                ) / ncol(mapRaster)
-  zoomcalc <- 13 - floor(max(log2(metersPerPixel/20),0))                   
-  print(paste0("downloading ",mapImageType," map tiles, zoom = ",zoomcalc))
-  mapImage <- OpenStreetMap::openmap(upperLeft,lowerRight,
+  if (is.null(imageFilename)) {
+    upperLeft <-c(llextent[4],llextent[1])
+    lowerRight <-c(llextent[3],llextent[2])
+    # calculate zoom based on width/pixel
+    metersPerPixel <- rasterHeight(raster::extent(mapRaster)[1],
+                                  raster::extent(mapRaster)[2],
+                                  raster::extent(mapRaster)[3],
+                                  raster::extent(mapRaster)[4],
+                                  lonlat=grepl("+proj=longlat",
+                                               crs(mapRaster,asText=TRUE)) 
+                                  ) / ncol(mapRaster)
+    zoomcalc <- 13 - floor(max(log2(metersPerPixel/20),0))                   
+    if (!silent) print(paste0("downloading ",mapImageType," map tiles, zoom = ",zoomcalc))
+    mapImage <- OpenStreetMap::openmap(upperLeft,lowerRight,
                                      zoom=zoomcalc,type=mapImageType) 
-  gc()
-  print(paste0("projecting ",mapImageType," map tiles"))
-  mapImage <- OpenStreetMap::openproj(mapImage,
-                                      projection=raster::crs(mapRaster)) 
-  mapImage <- raster::raster(mapImage)
-  print(paste0("resampling ",mapImageType," map tiles"))
+    gc()
+    if (!silent) print(paste0("projecting ",mapImageType," map tiles"))
+    mapImage <- OpenStreetMap::openproj(mapImage,
+                                        projection=raster::crs(mapRaster)) 
+    mapImage <- raster::raster(mapImage)
+    if (!silent) print(paste0("resampling ",mapImageType," map tiles")) 
+  } else {
+    mapImage <- raster::raster(imageFilename)
+    mapImage <- raster::setExtent(mapImage,llextent)
+    if (!silent) print(paste0("resampling ",imageFilename," as background image")) 
+  }
   mapImage <- raster::resample(mapImage,mapRaster) 
   return(mapImage)
 } 

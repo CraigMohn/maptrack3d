@@ -9,7 +9,8 @@ buildFeatureStack <- function(baseLayer,mapshape,
                               maxRasterize=10000,
                               sliceFeatureBuffer=0,
                               polySimplify=0,polyMethod="vis",
-                              polyWeighting=0.85,polySnapInt=0.0001  ) {
+                              polyWeighting=0.85,polySnapInt=0.0001,
+                              silent=FALSE,noisy=FALSE) {
   #  baseLayer a rasterLayer
   #  returns a rasterStack  which has 4 layers which can be stored as ints
   
@@ -28,14 +29,15 @@ buildFeatureStack <- function(baseLayer,mapshape,
     }
   }
   if (length(spRoads)>0) {
-    print("roads")
+    if (!silent) print("roads")
     spRoads <- sxdfMask(spRoads,bLrect)
   }
   if (length(spRoads)>0) {
-    print(paste0(nrow(spRoads)," roads to process"))
+    if (!silent) print(paste0(nrow(spRoads)," roads to process"))
     rlayer <- shapeToRasterLayer(sxdf=spRoads,
                                  templateRaster=baseLayer,
-                                 maxRasterize=maxRasterize)
+                                 maxRasterize=maxRasterize,
+                                 silent=silent,noisy=noisy)
     if (!is.finite(rlayer@data@min)) {
       warning("rlayer mess-up")
       print(rlayer@data@min)
@@ -46,17 +48,18 @@ buildFeatureStack <- function(baseLayer,mapshape,
                              ext=extent(baseLayer),
                              crs=crs(baseLayer),
                              vals=0)
-    print("no roads to add")
+    if (!silent) print("no roads to add")
   }
   if (length(spWaterL)>0) {
-    print("water lines")
+    if (!silent) print("water lines")
     spWaterL <- sxdfMask(spWaterL,bLrect)
   }
   if (length(spWaterL)>0) {
-    print(paste0(nrow(spWaterL)," water lines to process"))
+    if (!silent) print(paste0(nrow(spWaterL)," water lines to process"))
     wLlayer <- shapeToRasterLayer(sxdf=spWaterL,
                                   templateRaster=baseLayer,
-                                  maxRasterize=maxRasterize)
+                                  maxRasterize=maxRasterize,
+                                  silent=silent,noisy=noisy)
     if (!is.finite(wLlayer@data@min)) {
       warning("wLlayer mess-up")
       print(wLlayer@data@min)
@@ -67,10 +70,10 @@ buildFeatureStack <- function(baseLayer,mapshape,
                               ext=extent(baseLayer),
                               crs=crs(baseLayer),
                               vals=0)
-    print("no water lines to add")
+    if (!silent) print("no water lines to add")
   }
   if (length(spWaterA)>0) {
-    print("water polygons")
+    if (!silent) print("water polygons")
     if (sliceFeatureBuffer>0) {
       bLrectA <- bufferUnion(bLrect,
                               mapbuffer=sliceFeatureBuffer,
@@ -81,14 +84,15 @@ buildFeatureStack <- function(baseLayer,mapshape,
     spWaterA <- sxdfMask(spWaterA,bLrectA)
   }
   if (length(spWaterA)>0) {
-    print(paste0(nrow(spWaterA)," water areas to process"))
+    if (!silent) print(paste0(nrow(spWaterA)," water areas to process"))
     wAlayer <- shapeToRasterLayer(sxdf=spWaterA,
                                   templateRaster=baseLayer,
                                   maxRasterize=maxRasterize,
                                   polySimplify=polySimplify,
                                   polyMethod=polyMethod,
                                   polyWeighting=polyWeighting,
-                                  polySnapInt=polySnapInt)
+                                  polySnapInt=polySnapInt,
+                                  silent=silent,noisy=noisy)
     if (!is.finite(wAlayer@data@min)) {
       warning("wAlayer mess-up")
       print(wAlayer@data@min)
@@ -99,10 +103,10 @@ buildFeatureStack <- function(baseLayer,mapshape,
                               ext=extent(baseLayer),
                               crs=crs(baseLayer),
                               vals=0)
-    print("no water polygons to add")
+    if (!silent) print("no water polygons to add")
   }
   if (length(spTown)>0) {
-    print("towns")
+    if (!silent) print("towns")
     if (sliceFeatureBuffer>0) {
       bLrectA <- bufferUnion(bLrect,
                              mapbuffer=sliceFeatureBuffer,
@@ -113,14 +117,15 @@ buildFeatureStack <- function(baseLayer,mapshape,
     spTown <- sxdfMask(spTown, bLrectA)
   }
   if (length(spTown)>0) {
-    print(paste0(nrow(spTown)," towns to process"))
+    if (!silent) print(paste0(nrow(spTown)," towns to process"))
     tlayer <- shapeToRasterLayer(sxdf=spTown,
                                  templateRaster=baseLayer,
                                  maxRasterize=maxRasterize,
                                  polySimplify=polySimplify,
                                  polyMethod=polyMethod,
                                  polyWeighting=polyWeighting,
-                                 polySnapInt=polySnapInt)
+                                 polySnapInt=polySnapInt,
+                                 silent=silent,noisy=noisy)
     if (!is.finite(tlayer@data@min)) {
       warning("tlayer mess-up")
       print(tlayer@data@min)
@@ -131,7 +136,7 @@ buildFeatureStack <- function(baseLayer,mapshape,
                              ext=extent(baseLayer),
                              crs=crs(baseLayer),
                              vals=0)
-    print("no towns to add")
+    if (!silent) print("no towns to add")
   }
   s <- raster::stack(tlayer,wAlayer,wLlayer,rlayer)
   names(s) <- c("town","waterA","waterL","roads")  
@@ -140,7 +145,8 @@ buildFeatureStack <- function(baseLayer,mapshape,
 shapeToRasterLayer <- function(sxdf,templateRaster,
                                maxRasterize=10000,
                                polySimplify=0,polyMethod="vis",
-                               polyWeighting=0.85,polySnapInt=0.0001) {
+                               polyWeighting=0.85,polySnapInt=0.0001,
+                               silent=FALSE,noisy=FALSE) {
   # return a rasterLayer based on templateRaster, rasterizing sxdf lines/polygons 
   #   using values in sxdf@data[,"rank"]
   zeroRaster <- templateRaster
@@ -169,11 +175,11 @@ shapeToRasterLayer <- function(sxdf,templateRaster,
       last <- min(i*maxRasterize,nrow(sxdf))
       gc()        #  cleanup, this takes a lot of memory
       rlayer <- velox::velox(zeroRaster)
-      print(paste0("  ",round(system.time(
+      if (!silent) print(paste0("  ",round(system.time(
         rlayer$rasterize(spdf=sxdf[first:last,],field="value",background=0)
       )[[3]],digits=2)," rasterizing"))
       if (nloops>1) {
-        print(paste0("  ",round(system.time(
+        if (!silent) print(paste0("  ",round(system.time(
           retRaster <- maxLayerValue(retRaster,rlayer$as.RasterLayer(band=1))
         )[[3]],digits=2)," combining"))
       } else {

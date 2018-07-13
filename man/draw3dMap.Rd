@@ -10,13 +10,13 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   worldCountryvec = NULL, cropbox = NULL, mapbuffer = 0,
   mapmergebuffer = 0, rectangularMap = TRUE, elevDataSource = "SRTM",
   mapDataDir = NULL, resstr = "_1arc_v3_bil", rasterFileSetNames = NULL,
-  featureDataSource = "Shapefiles", shapefileDir = NULL,
-  writeShapefiles = TRUE, year = 2017, includeAllRoads = FALSE,
-  zeroBufferTowns = FALSE, zeroBufferWater = FALSE, writeElevFile = FALSE,
-  writeFeatureFile = FALSE, rasterDir = NULL,
-  rasterFileSetWriteName = NULL, drawRGL = TRUE, res3dplot = 2500,
-  drawProj4 = NULL, maxElev = 3000, vScale = 1.5, townLevel = 3,
-  roadLevel = 4, waterALevel = 4, waterLLevel = 5,
+  featureDataSource = "none", shapefileDir = NULL, writeShapefiles = TRUE,
+  year = 2017, includeAllRoads = FALSE, zeroBufferTowns = FALSE,
+  zeroBufferWater = FALSE, useImageRaster = FALSE, writeElevFile = FALSE,
+  writeFeatureFile = FALSE, writeImageFile = FALSE, imageFilename = NULL,
+  rasterDir = NULL, rasterFileSetWriteName = NULL, drawRGL = TRUE,
+  res3dplot = 2500, drawProj4 = NULL, maxElev = 3000, vScale = 1.5,
+  townLevel = 3, roadLevel = 4, waterALevel = 4, waterLLevel = 5,
   rglColorScheme = "default", mapColorDepth = 16, rglNAcolor = "Blue",
   rglNegcolor = "Red", citycolor = "SlateGray", watercolor = "Blue",
   roadcolor = "Black", glaciercolor = "White", rglShininess = 0,
@@ -27,7 +27,7 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   maxrastercells = 2.5e+08, maxRasterize = 5e+05, polySimplify = 0,
   polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04,
-  silent = FALSE, noisy = TRUE)
+  silent = FALSE, noisy = FALSE)
 }
 \arguments{
 \item{paths}{a set of segments which are multilinestrings. a 
@@ -49,7 +49,7 @@ use in defining map or finding features to include in the map}
 \item{USParkvec}{vector of US National Park names.  If specified, map
 will include the specified Parks but not the listed US states}
 
-\item{parkDir}{location of downloaded US Park boundary shapefiles 
+\item{parkDir}{string location of downloaded US Park boundary shapefiles 
 downloaded from, for example, https://irma.nps.gov/DataStore/}
 
 \item{worldCountryvec}{vector of 3-letter ISO country abbreviations}
@@ -63,68 +63,76 @@ The format is c(lon_min, lon_max, lat_min, lat_max).}
 map defined before merging, to eliminate gaps from minor
 boundary inconsistencies}
 
-\item{rectangularMap}{draw the entire rectangle enclosing the specified
+\item{rectangularMap}{logical, draw the entire rectangle enclosing the specified
 map area, as long as all relevant state/province rasters have been loaded}
 
-\item{elevDataSource}{"SRTM" to load data from saved SRTM data, 
+\item{elevDataSource}{character, "SRTM" to load data from saved SRTM data, 
 "Raster" to load saved raster files}
 
-\item{mapDataDir}{directory where zipped SRTM data files reside}
+\item{mapDataDir}{character, directory where zipped SRTM data files reside}
 
-\item{resstr}{suffix on SRTM data files after lon/lat info}
+\item{resstr}{character, suffix on SRTM data files after lon/lat info}
 
 \item{rasterFileSetNames}{vector of names of saved raster data files}
 
-\item{featureDataSource}{"Shapefiles" to load saved shapefiles, "TIGER"
-to fetch TIGER data for US states, "Raster" to load saved raster data
+\item{featureDataSource}{character, "Shapefiles" to load saved shapefiles, 
+"TIGER" to fetch TIGER data for US states, "Raster" to load saved raster data
 from directory specified}
 
-\item{shapefileDir}{location to load/save shapefiles}
+\item{shapefileDir}{character location to load/save shapefiles}
 
-\item{writeShapefiles}{write/overwrite shapefiles if TIGER data is used}
+\item{writeShapefiles}{logical, write/overwrite shapefiles if TIGER data is used}
 
 \item{year}{numeric year to use in calls for map boundaries/features}
 
-\item{includeAllRoads}{include all roads in shapefile, not just highways}
+\item{includeAllRoads}{logical, include all roads in shapefile, not just highways}
 
-\item{zeroBufferTowns}{use zero buffer trick to repair town polygon shapefile}
+\item{zeroBufferTowns}{logical, use zero buffer trick to repair town polygon shapefile}
 
-\item{zeroBufferWater}{use zero buffer trick to repair water polygon shapefile}
+\item{zeroBufferWater}{logical, use zero buffer trick to repair water polygon shapefile}
 
-\item{writeElevFile}{save the elevation raster files}
+\item{useImageRaster}{logical, use the image raster from saved openStreetmap 
+colrings of the map surface}
 
-\item{writeFeatureFile}{save the feature data raster files}
+\item{writeElevFile}{logical, save the elevation raster files}
 
-\item{rasterDir}{location to load and save raster files}
+\item{writeFeatureFile}{logical, save the feature data raster files}
+
+\item{writeImageFile}{logical, save the "bing","apple-iphoto","stamen-terrain"
+images specified in rglColorScheme as a raster file}
+
+\item{imageFilename}{name of raster or tiff file containing map background}
+
+\item{rasterDir}{character location to load and save raster files}
 
 \item{rasterFileSetWriteName}{name to use for the raster fileset written}
 
-\item{drawRGL}{if TRUE, open a window with the interactive 3D map}
+\item{drawRGL}{logical, open a window with the interactive 3D map}
 
-\item{res3dplot}{used to scale resolution, the maximum size the square root
+\item{res3dplot}{numeric, used to scale resolution, the maximum size the square root
 of the output height times width.  aggregation done in integer multiples.}
 
 \item{drawProj4}{string containing the projection to use in drawing the map,
 "UTM" (zone based on center of map),"Lambert","Albers", or any Proj4 string}
 
-\item{maxElev}{all elevations greater than this are colored the same}
+\item{maxElev}{numeric, all elevations greater than this are colored the same}
 
-\item{vScale}{vertical scale parameter, use larger for smaller areas}
+\item{vScale}{numeric vertical scale parameter, try bigger values for smaller areas}
 
-\item{townLevel}{display towns ranked this number or higher: 
+\item{townLevel}{numeric, display towns ranked this number or higher: 
 3=all towns     5=larger towns (in US >50k)}
 
-\item{roadLevel}{display roads ranked this number or higher:
+\item{roadLevel}{numeric, display roads ranked this number or higher:
 2=Service Drive, Bike Path, etc      3=Local Street
 4=Secondary Hwy                      5=Primary Hwy/Transit}
 
-\item{waterALevel}{display areal water ranked this number or higher:
+\item{waterALevel}{numeric, display areal water ranked this number or higher:
 2=res/treatmentpond/pit/quarry       3=lake/pond/swamp/stream
 4=class 2 or 3 bigger than 1k ha     5=named lake/pond/swamp/stream
 6=large lake/pond/swamp/stream       7=Ocean/Bay/Est/Sound
 8=glacier}
 
-\item{waterLLevel}{display linear water ranked this number or higher:
+\item{waterLLevel}{numeric, display linear water ranked this number or higher:
 2=canal/ditch                        3=braided stream
 4=stream/river                       5=named stream/river
 6=named stream/river containing the string "RIV"}
@@ -136,51 +144,51 @@ c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
 
 \item{mapColorDepth}{number of bits per color channel in map image}
 
-\item{rglNAcolor}{color used to display NA elevations}
+\item{rglNAcolor}{character, color used to display NA elevations}
 
-\item{rglNegcolor}{color used to display elevations below sea level}
+\item{rglNegcolor}{character, color used to display elevations below sea level}
 
-\item{citycolor}{color used to display cities}
+\item{citycolor}{character, color used to display cities}
 
-\item{watercolor}{color used to display water,}
+\item{watercolor}{character, color used to display water,}
 
-\item{roadcolor}{color used to display roads}
+\item{roadcolor}{character, color used to display roads}
 
-\item{glaciercolor}{color used to display glaciers}
+\item{glaciercolor}{character, color used to display glaciers}
 
 \item{rglShininess}{number controlling surface shininess in rgl rendering}
 
-\item{rglSpecular}{light color for specular light}
+\item{rglSpecular}{character, light color for specular light}
 
-\item{rglDiffuse}{light color for diffuse light}
+\item{rglDiffuse}{character, light color for diffuse light}
 
-\item{rglAmbient}{light color for ambient light}
+\item{rglAmbient}{character, light color for ambient light}
 
-\item{rglEmission}{color of emitted light}
+\item{rglEmission}{character, color of emitted light}
 
-\item{rglSmooth}{use Gouraud shading if TRUE}
+\item{rglSmooth}{logical, use Gouraud shading if TRUE}
 
-\item{rglAlpha}{alpha value for surface}
+\item{rglAlpha}{numeric alpha value for surface}
 
-\item{rglAntiAlias}{antialias points and lines when drawing surface}
+\item{rglAntiAlias}{logical, antialias points and lines when drawing surface}
 
-\item{rglTheta}{coordinate for light source}
+\item{rglTheta}{numeric coordinate for light source}
 
-\item{rglPhi}{coordinate for light source}
+\item{rglPhi}{numeric coordinate for light source}
 
-\item{saveRGL}{save the map to an html file}
+\item{saveRGL}{logical, save the map to an html file}
 
-\item{mapoutputdir}{location for saved html map file}
+\item{mapoutputdir}{character location for saved html map file}
 
 \item{outputName}{name of saved html map}
 
-\item{workProj4}{coordinte reference projection string}
+\item{workProj4}{coordinate reference projection string}
 
 \item{maxrastercells}{maximum number of cells in each written raster}
 
-\item{maxRasterize}{number of items for calls to velox$rasterize}
+\item{maxRasterize}{number of number of items for calls to velox$rasterize}
 
-\item{polySimplify}{amount of polygon simplification, see help
+\item{polySimplify}{numeric, amount of polygon simplification, see help
 for rmapshaper::ms_simplify}
 
 \item{polyMethod}{simplification method either "vis" or "dp"}
@@ -189,9 +197,9 @@ for rmapshaper::ms_simplify}
 
 \item{polySnapInt}{see help for rmapshaper::ms_simplify}
 
-\item{silent}{suppress most output}
+\item{silent}{logical, suppress most output}
 
-\item{noisy}{more output to track progress}
+\item{noisy}{logical, more output to track progress}
 }
 \description{
 \code{draw3dMap} draw 3D map from elevation and feature data,
@@ -204,4 +212,62 @@ Create a map displaying the tracks specified.  Tracks may be drawn in one
    be prodded into appearing as a line through judicious choice of point
    size and alpha) with the color varying based on speed and the chosen
    palette
+}
+\examples{
+\dontrun{
+##  draw a rectangular region from local SRTM data
+##    to download the data, start at https://earthexplorer.usgs.gov/ ,
+##    create a free account and order the data you need
+##    put it into mapDataDir
+mapWindow <- c(23.3,27.4,34.7,36.0)  # Crete
+draw3dMap(mapWindow=mapWindow,
+          mapDataDir="c:/bda/Europe 1s",
+          vScale=1.6,
+          rglColorScheme="bing",
+          drawProj4="UTM", 
+          saveRGL=TRUE,mapoutputdir=mapoutputdir,
+          outputName="Crete")
+
+##  draw US Yosemite National Park from local SRTM data
+draw3dMap(USParkvec="YOSE",USStatevec="CA",
+          parkDir=parkDir,mapbuffer=10000,
+          mapDataDir=mapDataDir,
+          shapefileDir=shapefileDir,
+          featureDataSource="shapefiles",
+          townLevel=3,roadLevel=2,waterALevel=4,waterLLevel=5,
+          vScale=1.5,
+          rglColorScheme="terrain",
+          drawProj4="UTM",
+          saveRGL=TRUE,mapoutputdir=mapoutputdir,
+          outputName="Yosemite")
+##  draw US Yosemite National Park from CGIAR hosted SRTM data
+draw3dMap(USParkvec="YOSE",USStatevec="CA",
+          parkDir=parkDir,mapbuffer=10000,
+          vScale=1.5,
+          rglColorScheme="bing",
+          drawProj4="UTM", 
+          saveRGL=TRUE,mapoutputdir=mapoutputdir,
+          outputName="Yosemite CGIAR bing")
+##  draw US Yosemite National Park from CGIAR hosted SRTM data and TIGER data
+draw3dMap(USParkvec="YOSE",USStatevec="CA",
+          parkDir=parkDir,mapbuffer=10000,
+          shapefileDir=shapefileDir,
+          featureDataSource="shapefiles",
+          townLevel=3,roadLevel=2,waterALevel=4,waterLLevel=5,
+          vScale=1.5,
+          rglColorScheme="bing",
+          drawProj4="UTM",
+          saveRGL=TRUE,mapoutputdir=mapoutputdir,
+          outputName="Yosemite CGIAR bing TIGER")
+## draw mainland Portugal from CGIAR hosted data
+draw3dMap(worldCountryvec="PRT",
+          cropbox=c(-10, 10, 36, 43), # remove islands
+          mapbuffer=100, # expand boundary to speed masking
+          vScale=1.4,    # increase scale with bing coloring
+          rglColorScheme="bing",
+          drawProj4="Albers", 
+          saveRGL=TRUE,mapoutputdir=mapoutputdir,
+          outputName="Portugal Albers bing")
+}
+
 }

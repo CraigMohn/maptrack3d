@@ -1,6 +1,7 @@
 loadMapElevData <- function(mapshape,mapDataDir,resstr,
                             noisy=TRUE,silent=FALSE,
                             latLimit=59) {
+
   m.sub <- NULL
   j <- 1
   r.list <- list()
@@ -86,7 +87,7 @@ loadMapElevData <- function(mapshape,mapDataDir,resstr,
             tmp <- raster::resample(tmp, newraster)
             if (noisy) print(tmp)
           } else {
-            if (max(abs(firstOrigin-raster::origin(tmp))) > 0.0000001)  
+            if (max(abs(firstOrigin-raster::origin(tmp))) > 0.000001)  
               warning("origin mismatch - ",raster::origin(tmp)," ",firstOrigin)
           }
           if (!rgeos::gContainsProperly(mapshape, ei)) {

@@ -60,6 +60,33 @@ loadSavedFeatureData <- function(savedNameVec,rasterDir,
   names(rStack) <- lnames
   return(rStack)
 }
+loadSavedImageData <- function(savedNameVec,rasterDir,
+                               imageSource,
+                               noisy=FALSE,silent=FALSE) {
+  j <- 1
+  r.list <- list()
+  for (st in savedNameVec) {
+    fvec <- list.files(path=paste0(rasterDir,"/",st),
+                       pattern=paste0(st,imageSource,"[0-9]{,2}.grd"))
+    for (fn in fvec) {
+      if (!silent) print(paste0("loading ",fn))
+      imageRaster <- raster::brick(paste0(rasterDir,"/",st,"/",fn))
+      if (noisy) print(imageRaster)
+      r.list[[j]] <- imageRaster
+      j <- j + 1
+    }
+  }
+  if (!silent) print("calling merge")
+  if (j > 2) {
+    temp <- system.time(    
+      m.sub <- do.call(merge, r.list)
+    )[3]
+    if (!silent) print(temp)
+  } else {
+    m.sub <- imageRaster
+  }
+  return(m.sub)
+}
 writeElevRaster <- function(elevations,maxrastercells,rasterDir,fname,
                             noisy=FALSE,silent=FALSE) {
   dir.create(file.path(rasterDir, fname))
