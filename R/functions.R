@@ -63,7 +63,7 @@ sxdfMask <- function(sxdf,poly,keepTouch=FALSE) {
 
   #  keep only intersecting sp objects in dataframe
   tmpgeo <- sxdf[tmp.2,]
-  tmpdata <- tmpdata[tmp.2,]
+  tmpdata <- tmpdata[tmp.2,,drop=FALSE]
   row.names(tmpgeo) <- row.names(tmpdata)
   if (!keepTouch) {
     return(raster::intersect(tmpgeo,poly))

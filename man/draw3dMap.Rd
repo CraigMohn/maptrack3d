@@ -22,7 +22,9 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   roadcolor = "Black", glaciercolor = "White", rglShininess = 0,
   rglSpecular = "black", rglDiffuse = "white", rglAmbient = "white",
   rglEmission = "black", rglSmooth = TRUE, rglAlpha = 1,
-  rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15, saveRGL = FALSE,
+  rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15,
+  trackColor = "Magenta", trackCurve = FALSE,
+  trackCurveElevFromRaster = TRUE, trackCurveHeight = 10, saveRGL = FALSE,
   mapoutputdir = NULL, outputName = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   maxrastercells = 2.5e+08, maxRasterize = 5e+05, polySimplify = 0,
@@ -30,10 +32,12 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   silent = FALSE, noisy = FALSE)
 }
 \arguments{
-\item{paths}{a set of segments which are multilinestrings. a 
-data frame or tibble containing at least: position_lat.dd,
-position_lon.dd,(or lat,lon)(both numeric,decimal degrees),
-segment(numeric)}
+\item{paths}{a set of segments which are contained in a 
+data frame or tibble containing at least: lon, lat, 
+(both numeric,decimal degrees), and segment(numeric) to identify 
+different paths or segemnts on a path.  If trackCurveElevFromRaster
+is FALSE, the data frame must include a column named altitude.m which 
+contains the elevation recorded by the GPS}
 
 \item{mapWindow}{a vector of 4 numbers which describe the region drawn.
 The format is c(lon_min, lon_max, lat_min, lat_max)}
@@ -175,6 +179,14 @@ c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
 \item{rglTheta}{numeric coordinate for light source}
 
 \item{rglPhi}{numeric coordinate for light source}
+
+\item{trackColor}{character, name of color used to draw tracks}
+
+\item{trackCurve}{logical, draw the tracks as curves above the surface}
+
+\item{trackCurveElevFromRaster}{logical, get curve elevations from elevation raster}
+
+\item{trackCurveHeight}{numeric, distance above surface to draw curve (meters)}
 
 \item{saveRGL}{logical, save the map to an html file}
 

@@ -146,17 +146,16 @@ shapeToRasterLayer <- function(sxdf,templateRaster,
                                maxRasterize=10000,
                                polySimplify=0,polyMethod="vis",
                                polyWeighting=0.85,polySnapInt=0.0001,
+                               keepTouch=FALSE,
                                silent=FALSE,noisy=FALSE) {
   # return a rasterLayer based on templateRaster, rasterizing sxdf lines/polygons 
   #   using values in sxdf@data[,"rank"]
   zeroRaster <- templateRaster
   raster::values(zeroRaster) <- 0
   retRaster <- zeroRaster
-  
   CP <- as(extent(templateRaster), "SpatialPolygons")
   sp::proj4string(CP) <- raster::crs(templateRaster)
-  sxdf <- sxdfMask(sxdf,CP) 
-
+  sxdf <- sxdfMask(sxdf,CP,keepTouch=keepTouch) 
   if (!is.null(sxdf)) {
     sxdf <- sxdf[order(sxdf$value),]  #  sort for velox rasterize
     if (class(sxdf)=="SpatialPolygonsDataFrame") {
@@ -171,17 +170,19 @@ shapeToRasterLayer <- function(sxdf,templateRaster,
     nloops <- ceiling(nrow(sxdf)/maxRasterize)
     for (i in 1:nloops) {
       if (nloops > 1) print(paste0(i," / ",nloops))
-      first <- (i-1)*maxRasterize + 1
-      last <- min(i*maxRasterize,nrow(sxdf))
+      firstrow <- (i-1)*maxRasterize + 1
+      lastrow <- min(i*maxRasterize,nrow(sxdf))
       gc()        #  cleanup, this takes a lot of memory
       rlayer <- velox::velox(zeroRaster)
-      if (!silent) print(paste0("  ",round(system.time(
-        rlayer$rasterize(spdf=sxdf[first:last,],field="value",background=0)
-      )[[3]],digits=2)," rasterizing"))
+      temptime <- round(system.time(
+        rlayer$rasterize(spdf=sxdf[firstrow:lastrow,],field="value",background=0)
+      )[[3]],digits=2)
+      if (!silent) print(paste0("  ",temptime," rasterizing"))
       if (nloops>1) {
-        if (!silent) print(paste0("  ",round(system.time(
+        temptime <- round(system.time(
           retRaster <- maxLayerValue(retRaster,rlayer$as.RasterLayer(band=1))
-        )[[3]],digits=2)," combining"))
+        )[[3]],digits=2)
+        if (!silent) print(paste0("  ",temptime," combining"))
       } else {
         retRaster <- rlayer$as.RasterLayer(band=1)
       }

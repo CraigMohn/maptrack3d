@@ -24,7 +24,7 @@ draw3DMapTrack <- function(mapRaster,
                            rglAmbient="white", 
                            rglEmission="black",
                            rglTheta=0,rglPhi=15,
-                           trackcolor="Magenta",
+                           trackColor="Magenta",
                            trackCurve=FALSE,
                            trackCurveElevFromRaster=TRUE,
                            trackCurveHeight=10,
@@ -39,6 +39,10 @@ draw3DMapTrack <- function(mapRaster,
                           "spWaterA"=1,
                           "spWaterL"=1)
 
+  if (!is.null(trackdf)) {
+    trackLines <- trackpts_to_lines(lon=trackdf$lon,lat=trackdf$lat,
+                                    id_field=trackdf$segment) 
+  }
   if (!is.null(drawProj4)) { 
     if (drawProj4=="UTM") {
       drawProj4 <- UTMProj4(lon=(extent(mapRaster)[1]+extent(mapRaster)[2])/2,
@@ -60,9 +64,18 @@ draw3DMapTrack <- function(mapRaster,
         raster::projectRaster(mapRaster[["elevations"]],crs=drawProj4)
     }
     if (!is.null(spList)) {
+      if (!silent) print(paste0("projecting feature shapes to ",drawProj4))
       for (x in names(spList)) {
         spList[[x]] <-  spXformNullOK(spList[[x]],CRS(drawProj4))
       }
+    }
+    if (!is.null(imageRaster)) {
+      if (!silent) print(paste0("projecting map image to ",drawProj4))
+      imageRaster <- raster::projectRaster(imageRaster,crs=drawProj4,method="ngb")
+    }
+    if (!is.null(trackdf)) {
+      if (!silent) print(paste0("projecting tracks to ",drawProj4))
+      trackLines <-  spXformNullOK(trackLines,CRS(drawProj4))
     }
   }
   if (class(mapRaster)=="RasterLayer") {
@@ -86,9 +99,6 @@ draw3DMapTrack <- function(mapRaster,
   yscale <- yRatio(elevations)
   
   if (!is.null(imageRaster)) {
-    if (!is.null(drawProj4)) {
-      imageRaster <- raster::projectRaster(imageRaster,crs=drawProj4,method="ngb")
-    }
     mapImage <- raster::crop(imageRaster,elevations)
     col <- t(matrix(
       mapply(rgb2hex,as.vector(mapImage[[1]]),
@@ -158,8 +168,15 @@ draw3DMapTrack <- function(mapRaster,
   }
   if (!is.null(trackdf)) {
     if (!trackCurve) {
-      cellnum <- cellFromXY(mapRaster,cbind(trackdf$lon,trackdf$lat))
-      col[cellnum] <- trackcolor
+      trackRaster <- shapeToRasterLayer(sxdf=trackLines,
+                                        templateRaster=elevations,
+                                        maxRasterize=5000,
+                                        keepTouch=TRUE,
+                                        silent=silent,noisy=noisy)
+      temp <- as.matrix(trackRaster)
+      temp[ is.na(temp)] <- 0
+      col[temp >= 1] <- gplots::col2hex(trackColor)
+      trackRaster <- NULL
     } else {
       xmin <- raster::extent(mapRaster)[1]
       xmax <- raster::extent(mapRaster)[2]
@@ -209,7 +226,7 @@ draw3DMapTrack <- function(mapRaster,
   pan3d(2)  # right button for panning, doesn't play well with zoom)
   if (!is.null(trackdf) & trackCurve) {
     rgl::lines3d(xpath,ypath,zpath,
-                 lwd=2,col = trackcolor, alpha=1.0)
+                 lwd=2,col = trackColor, alpha=1.0)
     
   }
   if (saveRGL) 
@@ -356,4 +373,33 @@ spXformNullOK <- function(sp,crs) {
     }
   }
 }
-
+trackpts_to_lines <- function(lon, lat, id_field = NULL) {
+  # adapted from rpubs.com code by Kyle Walker
+  #  greatly simplified 
+  if (is.null(id_field)) id_field <- rep(1,length(lon))
+  
+  xy <- data.frame(lon=lon,lat=lat)
+  # enhance this to allow gps other than wgs84
+  trackProj4 <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
+  datapts <- sp::SpatialPointsDataFrame(coords = xy, data = data.frame(id=id_field),
+                      proj4string = CRS(trackProj4))
+  #Split into a list by ID field
+  paths <- split(datapts, datapts[["id"]])
+  sp_lines <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[1]])), "track1")),
+                               proj4string = CRS(trackProj4))
+  idvec <- 1
+  if (length(paths)>1) {
+    for (p in 2:length(paths)) {
+      id <- paste0("track",p)
+      idvec <- c(idvec,p)
+      l <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[p]])), id)),
+                            proj4string = CRS(trackProj4))
+      sp_lines <- rbind(sp_lines, l)
+    }
+  }
+  temp <- data.frame("value"=idvec,
+                     row.names=paste0("track",idvec))
+  sp_lines <- sp::SpatialLinesDataFrame(sp_lines,
+                                        data=temp)
+  return(sp_lines)
+}

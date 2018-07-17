@@ -11,10 +11,12 @@
 #'    size and alpha) with the color varying based on speed and the chosen
 #'    palette
 #'
-#' @param paths a set of segments which are multilinestrings. a 
-#'    data frame or tibble containing at least: position_lat.dd,
-#'    position_lon.dd,(or lat,lon)(both numeric,decimal degrees),
-#'    segment(numeric)
+#' @param paths a set of segments which are contained in a 
+#'    data frame or tibble containing at least: lon, lat, 
+#'    (both numeric,decimal degrees), and segment(numeric) to identify 
+#'    different paths or segemnts on a path.  If trackCurveElevFromRaster
+#'    is FALSE, the data frame must include a column named altitude.m which 
+#'    contains the elevation recorded by the GPS
 #' @param mapWindow a vector of 4 numbers which describe the region drawn.
 #'    The format is c(lon_min, lon_max, lat_min, lat_max)
 #'    
@@ -107,6 +109,12 @@
 #' @param rglAntiAlias logical, antialias points and lines when drawing surface
 #' @param rglTheta numeric coordinate for light source
 #' @param rglPhi numeric coordinate for light source
+#' 
+#' @param trackColor character, name of color used to draw tracks
+#' @param trackCurve logical, draw the tracks as curves above the surface
+#' @param trackCurveElevFromRaster logical, get curve elevations from elevation raster
+#' @param trackCurveHeight numeric, distance above surface to draw curve (meters)
+#'
 #' @param saveRGL logical, save the map to an html file
 #' @param mapoutputdir character location for saved html map file
 #' @param outputName name of saved html map
@@ -223,6 +231,10 @@ draw3dMap <- function(paths=NULL,
                       rglAntiAlias=TRUE,
                       rglTheta=0,
                       rglPhi=15,
+                      trackColor="Magenta",
+                      trackCurve=FALSE,
+                      trackCurveElevFromRaster=TRUE,
+                      trackCurveHeight=10,
                       saveRGL=FALSE,mapoutputdir=NULL,outputName=NULL,
                       #  CRS, rasterization control
                       workProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
@@ -439,14 +451,15 @@ draw3dMap <- function(paths=NULL,
   if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
   sfact <- ceiling(sqrt((as.double(elevations@ncols)/res3dplot)*
                         (as.double(elevations@nrows)/res3dplot)))
-  if (!silent) print(paste0("scaling raster down by a factor of ",sfact))
-  if (sfact > 1)
+  if (sfact > 1) {
+    if (!silent) print(paste0("scaling raster down by a factor of ",sfact))
     temptime <- system.time(
       elevations <- raster::aggregate(elevations,fact=sfact,fun=max,
                                       expand=TRUE,na.rm=TRUE)
     )[[3]]
     if (!silent) print(paste0(" ",temptime))
-  if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
+    if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
+  }
 
   if ( featureDataSource %in% c("Shapefiles","TIGER") &
       # and we have not generated a raster for native Proj4 
@@ -487,6 +500,9 @@ draw3dMap <- function(paths=NULL,
                    rglSpecular=rglSpecular,rglDiffuse=rglDiffuse,
                    rglAmbient=rglAmbient,rglEmission=rglEmission,
                    rglTheta=rglTheta,rglPhi=rglPhi,saveRGL=saveRGL,
+                   trackColor=trackColor,trackCurve=trackCurve,
+                   trackCurveElevFromRaster=trackCurveElevFromRaster,
+                   trackCurveHeight=trackCurveHeight,
                    mapoutputdir=mapoutputdir,outputName=outputName,
                    silent=silent,noisy=noisy) 
   return(NULL)
