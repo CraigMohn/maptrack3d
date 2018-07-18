@@ -12,9 +12,10 @@
 #'    palette
 #'
 #' @param paths a set of segments which are contained in a 
-#'    data frame or tibble containing at least: lon, lat, 
-#'    (both numeric,decimal degrees), and segment(numeric) to identify 
-#'    different paths or segemnts on a path.  If trackCurveElevFromRaster
+#'    data frame or tibble containing at least: lon, lat, (these may also have
+#'    the names "position_lon.dd" and "position_lat.dd") and are both 
+#'    numeric with decimal degrees, and segment(numeric) to identify 
+#'    different paths or segments on a path.  If trackCurveElevFromRaster
 #'    is FALSE, the data frame must include a column named altitude.m which 
 #'    contains the elevation recorded by the GPS
 #' @param mapWindow a vector of 4 numbers which describe the region drawn.

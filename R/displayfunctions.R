@@ -28,6 +28,7 @@ draw3DMapTrack <- function(mapRaster,
                            trackCurve=FALSE,
                            trackCurveElevFromRaster=TRUE,
                            trackCurveHeight=10,
+                           gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
                            saveRGL=FALSE,
                            mapoutputdir=NA,
                            outputName="most recent",
@@ -42,7 +43,16 @@ draw3DMapTrack <- function(mapRaster,
   if (!is.null(trackdf)) {
     trackLines <- trackpts_to_lines(lon=trackdf$lon,lat=trackdf$lat,
                                     id_field=trackdf$segment) 
+    trackPoints <- trackpts_to_spPointDF(trackdf=trackdf,
+                                         gpsProj4=gpsProj4,
+                                         workProj4=raster::crs(mapRaster))
+    if (trackCurveElevFromRaster)
+      #  get altitude
+      trackPoints@data[,"altitude.m"] <- 
+               raster::extract(mapRaster[["elevations"]],sp::coordinates(trackPoints),
+                               method="bilinear")
   }
+  
   if (!is.null(drawProj4)) { 
     if (drawProj4=="UTM") {
       drawProj4 <- UTMProj4(lon=(extent(mapRaster)[1]+extent(mapRaster)[2])/2,
@@ -76,6 +86,7 @@ draw3DMapTrack <- function(mapRaster,
     if (!is.null(trackdf)) {
       if (!silent) print(paste0("projecting tracks to ",drawProj4))
       trackLines <-  spXformNullOK(trackLines,CRS(drawProj4))
+      trackPoints <-  spXformNullOK(trackPoints,CRS(drawProj4))
     }
   }
   if (class(mapRaster)=="RasterLayer") {
@@ -182,23 +193,13 @@ draw3DMapTrack <- function(mapRaster,
       xmax <- raster::extent(mapRaster)[2]
       ymin <- raster::extent(mapRaster)[3]
       ymax <- raster::extent(mapRaster)[4]
-      xlen <-
-        (raster::pointDistance(cbind(xmin,ymin),cbind(xmax,ymin),lonlat=TRUE) +
-           raster::pointDistance(cbind(xmin,ymax),cbind(xmax,ymax),lonlat=TRUE)) /
-        2
-      ylen <-
-        (raster::pointDistance(cbind(xmin,ymin),cbind(xmin,ymax),lonlat=TRUE) +
-           raster::pointDistance(cbind(xmax,ymin),cbind(xmax,ymax),lonlat=TRUE)) /
-        2
-      
-      xpath <- xlen * (1 - (trackdf$lat-ymin)/(ymax-ymin))
-      ypath <- ylen * (trackdf$lon-xmin)/(xmax-xmin)
-      if (trackCurveElevFromRaster)  {
-        zpath <- raster::extract(mapRaster,cbind(trackdf$lon,trackdf$lat),
-                             method="bilinear") +  trackCurveHeight
-      } else {
-        zpath <- trackdf$altitude.m  +  trackCurveHeight
-      }
+      xlen <- ncol(mapRaster)
+      ylen <- nrow(mapRaster)
+      xpath <- ylen*(1 - (sp::coordinates(trackPoints)[,2]-ymin)/(ymax-ymin)) -
+        origin(mapRaster)[2]
+      ypath <- xlen*(sp::coordinates(trackPoints)[,1]-xmin)/(xmax-xmin) -
+        origin(mapRaster)[1]
+      zpath <- trackdf$altitude.m  +  trackCurveHeight
     }
   }
   
@@ -372,6 +373,37 @@ spXformNullOK <- function(sp,crs) {
       return(NULL)
     }
   }
+}
+trackpts_to_spPointDF <- function(trackdf,
+  gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
+  workProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") {
+  
+  if ("position_lon.dd" %in% names(trackdf)) {
+    lon <- trackdf$position_lon.dd
+    lat <- trackdf$position_lat.dd
+  } else if ("lon" %in% names(trackdf)) {
+    lon <- trackdf$lon
+    lat <- trackdf$lat
+  }
+  datadf <- data.frame(lon=lon,lat=lat)
+  if ("altitude.m" %in% names(trackdf)) {
+    datadf$altitude.m <- trackdf$altitude.m
+  } else {
+    datadf$altitude.m <- NA
+  }
+  if ("segment" %in% names(trackdf)) {
+    datadf$segment <- trackdf$segment
+  } else {
+    datadf$segment <- 1
+  }
+  retdf <-
+    SpatialPointsDataFrame(coords=datadf[,c("lon","lat")], 
+                           data=datadf,
+                           proj4string=CRS(gpsProj4))
+  if (as.character(gpsProj4) != as.character(workProj4)) {
+    retdf <- spXformNullOK(retdf,CRS(workProj4))
+  }   
+  return(retdf)
 }
 trackpts_to_lines <- function(lon, lat, id_field = NULL) {
   # adapted from rpubs.com code by Kyle Walker
