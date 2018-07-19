@@ -33,8 +33,8 @@
 #'    downloaded from, for example, https://irma.nps.gov/DataStore/ 
 #' @param worldCountryvec vector of 3-letter ISO country abbreviations 
 #' @param mapbuffer numeric value to expand defined map
-#' @param mapmergebuffer numeric value to expand components of the 
-#'    map defined before merging, to eliminate gaps from minor
+#' @param mapmergebuffer numeric value to expand components (states, provinces,
+#'    countries) of the map defined before merging, to eliminate gaps from minor
 #'    boundary inconsistencies
 #' @param cropbox vector of 4 numbers for cropping the map defined above
 #'    The format is c(lon_min, lon_max, lat_min, lat_max).
@@ -49,7 +49,7 @@
 #' 
 #' @param featureDataSource character, "Shapefiles" to load saved shapefiles, 
 #'    "TIGER" to fetch TIGER data for US states, "Raster" to load saved raster data
-#'    from directory specified 
+#'    from directory specified , "none" to show none
 #' @param shapefileDir character location to load/save shapefiles
 #' @param writeShapefiles logical, write/overwrite shapefiles if TIGER data is used
 #' @param year numeric year to use in calls for map boundaries/features
@@ -224,7 +224,7 @@ draw3dMap <- function(paths=NULL,
                       rglNAcolor="Blue",rglNegcolor="Red",
                       citycolor="SlateGray",watercolor="Blue",
                       roadcolor="Black",glaciercolor="White",
-                      rglShininess=0,
+                      rglShininess=0.02,
                       rglSpecular="black", rglDiffuse="white", 
                       rglAmbient="white", rglEmission="black",
                       rglSmooth=TRUE,
@@ -235,7 +235,7 @@ draw3dMap <- function(paths=NULL,
                       trackColor="Magenta",
                       trackCurve=FALSE,
                       trackCurveElevFromRaster=TRUE,
-                      trackCurveHeight=10,
+                      trackCurveHeight=15,
                       saveRGL=FALSE,mapoutputdir=NULL,outputName=NULL,
                       #  CRS, rasterization control
                       workProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",

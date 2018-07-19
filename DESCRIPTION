@@ -1,8 +1,8 @@
 Package: maptrack3d
 Type: Package
-Title: Draw 3d maps from SRTM data
-Version: 0.9.0
-Date: 2018-07-05
+Title: Draw 3d maps from SRTM data with GPS tracks
+Version: 0.9.1
+Date: 2018-07-19
 Author: Craig Mohn
 Maintainer: Craig Mohn <craig.mohn.projects@gmail.com>
 Depends: R (>= 3.3.0)

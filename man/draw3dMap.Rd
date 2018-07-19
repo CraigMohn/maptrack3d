@@ -19,12 +19,12 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   townLevel = 3, roadLevel = 4, waterALevel = 4, waterLLevel = 5,
   rglColorScheme = "default", mapColorDepth = 16, rglNAcolor = "Blue",
   rglNegcolor = "Red", citycolor = "SlateGray", watercolor = "Blue",
-  roadcolor = "Black", glaciercolor = "White", rglShininess = 0,
+  roadcolor = "Black", glaciercolor = "White", rglShininess = 0.02,
   rglSpecular = "black", rglDiffuse = "white", rglAmbient = "white",
   rglEmission = "black", rglSmooth = TRUE, rglAlpha = 1,
   rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15,
   trackColor = "Magenta", trackCurve = FALSE,
-  trackCurveElevFromRaster = TRUE, trackCurveHeight = 10, saveRGL = FALSE,
+  trackCurveElevFromRaster = TRUE, trackCurveHeight = 15, saveRGL = FALSE,
   mapoutputdir = NULL, outputName = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   maxrastercells = 2.5e+08, maxRasterize = 5e+05, polySimplify = 0,
@@ -33,9 +33,10 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
 }
 \arguments{
 \item{paths}{a set of segments which are contained in a 
-data frame or tibble containing at least: lon, lat, 
-(both numeric,decimal degrees), and segment(numeric) to identify 
-different paths or segemnts on a path.  If trackCurveElevFromRaster
+data frame or tibble containing at least: lon, lat, (these may also have
+the names "position_lon.dd" and "position_lat.dd") and are both 
+numeric with decimal degrees, and segment(numeric) to identify 
+different paths or segments on a path.  If trackCurveElevFromRaster
 is FALSE, the data frame must include a column named altitude.m which 
 contains the elevation recorded by the GPS}
 
@@ -63,8 +64,8 @@ The format is c(lon_min, lon_max, lat_min, lat_max).}
 
 \item{mapbuffer}{numeric value to expand defined map}
 
-\item{mapmergebuffer}{numeric value to expand components of the 
-map defined before merging, to eliminate gaps from minor
+\item{mapmergebuffer}{numeric value to expand components (states, provinces,
+countries) of the map defined before merging, to eliminate gaps from minor
 boundary inconsistencies}
 
 \item{rectangularMap}{logical, draw the entire rectangle enclosing the specified
@@ -81,7 +82,7 @@ map area, as long as all relevant state/province rasters have been loaded}
 
 \item{featureDataSource}{character, "Shapefiles" to load saved shapefiles, 
 "TIGER" to fetch TIGER data for US states, "Raster" to load saved raster data
-from directory specified}
+from directory specified , "none" to show none}
 
 \item{shapefileDir}{character location to load/save shapefiles}
 

@@ -50,7 +50,7 @@ draw3DMapTrack <- function(mapRaster,
       #  get altitude
       trackPoints@data[,"altitude.m"] <- 
                raster::extract(mapRaster[["elevations"]],sp::coordinates(trackPoints),
-                               method="bilinear")
+                               method="simple")
   }
   
   if (!is.null(drawProj4)) { 
