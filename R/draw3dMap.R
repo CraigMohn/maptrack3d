@@ -113,6 +113,7 @@
 #' 
 #' @param trackColor character, name of color used to draw tracks
 #' @param trackCurve logical, draw the tracks as curves above the surface
+#' @param trackWidth integer, add to minimal line width 
 #' @param trackCurveElevFromRaster logical, get curve elevations from elevation raster
 #' @param trackCurveHeight numeric, distance above surface to draw curve (meters)
 #'
@@ -234,6 +235,7 @@ draw3dMap <- function(paths=NULL,
                       rglPhi=15,
                       trackColor="Magenta",
                       trackCurve=FALSE,
+                      trackWidth=0,
                       trackCurveElevFromRaster=TRUE,
                       trackCurveHeight=15,
                       saveRGL=FALSE,mapoutputdir=NULL,outputName=NULL,
@@ -502,6 +504,7 @@ draw3dMap <- function(paths=NULL,
                    rglAmbient=rglAmbient,rglEmission=rglEmission,
                    rglTheta=rglTheta,rglPhi=rglPhi,saveRGL=saveRGL,
                    trackColor=trackColor,trackCurve=trackCurve,
+                   trackWidth=trackWidth,
                    trackCurveElevFromRaster=trackCurveElevFromRaster,
                    trackCurveHeight=trackCurveHeight,
                    mapoutputdir=mapoutputdir,outputName=outputName,

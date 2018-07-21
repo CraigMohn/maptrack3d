@@ -23,7 +23,7 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   rglSpecular = "black", rglDiffuse = "white", rglAmbient = "white",
   rglEmission = "black", rglSmooth = TRUE, rglAlpha = 1,
   rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15,
-  trackColor = "Magenta", trackCurve = FALSE,
+  trackColor = "Magenta", trackCurve = FALSE, trackWidth = 0,
   trackCurveElevFromRaster = TRUE, trackCurveHeight = 15, saveRGL = FALSE,
   mapoutputdir = NULL, outputName = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
@@ -184,6 +184,8 @@ c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
 \item{trackColor}{character, name of color used to draw tracks}
 
 \item{trackCurve}{logical, draw the tracks as curves above the surface}
+
+\item{trackWidth}{integer, add to minimal line width}
 
 \item{trackCurveElevFromRaster}{logical, get curve elevations from elevation raster}
 

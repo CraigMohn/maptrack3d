@@ -26,6 +26,7 @@ draw3DMapTrack <- function(mapRaster,
                            rglTheta=0,rglPhi=15,
                            trackColor="Magenta",
                            trackCurve=FALSE,
+                           trackWidth=0,
                            trackCurveElevFromRaster=TRUE,
                            trackCurveHeight=10,
                            gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
@@ -41,18 +42,28 @@ draw3DMapTrack <- function(mapRaster,
                           "spWaterL"=1)
 
   if (!is.null(trackdf)) {
-    trackLines <- trackpts_to_lines(lon=trackdf$lon,lat=trackdf$lat,
-                                    id_field=trackdf$segment) 
-    trackPoints <- trackpts_to_spPointDF(trackdf=trackdf,
+    trackdf <- trackNameFix(trackdf)
+    if (trackCurve) {
+      # points for drawing curve over surface  
+      if (trackCurveElevFromRaster)               # if pulling elevs from 
+        trackdf <- trackFill(trackdf,maxdist=3)   #  surface, do it more often 
+      trackPoints <- trackpts_to_spPointDF(trackdf=trackdf,
+                                           gpsProj4=gpsProj4,
+                                           workProj4=raster::crs(mapRaster))
+      if (trackCurveElevFromRaster) {
+        # get altitude from raster 
+        trackPoints@data[,"altitude.m"] <- 
+                 raster::extract(mapRaster[["elevations"]],
+                                 sp::coordinates(trackPoints),
+                                 method="simple")           
+      }
+    } else {
+       # lines for rasterizing to color cells on surface
+      trackLines <- trackpts_to_spLineDF(trackdf=trackdf,
                                          gpsProj4=gpsProj4,
-                                         workProj4=raster::crs(mapRaster))
-    if (trackCurveElevFromRaster)
-      #  get altitude
-      trackPoints@data[,"altitude.m"] <- 
-               raster::extract(mapRaster[["elevations"]],sp::coordinates(trackPoints),
-                               method="simple")
-  }
-  
+                                         workProj4=raster::crs(mapRaster)) 
+    }
+  }  
   if (!is.null(drawProj4)) { 
     if (drawProj4=="UTM") {
       drawProj4 <- UTMProj4(lon=(extent(mapRaster)[1]+extent(mapRaster)[2])/2,
@@ -107,7 +118,6 @@ draw3DMapTrack <- function(mapRaster,
   mmmelev <- raster::as.matrix(elevations)
   x <- seq(1,length.out=nrow(mmmelev))
   y <- seq(1,length.out=ncol(mmmelev))
-  yscale <- yRatio(elevations)
   
   if (!is.null(imageRaster)) {
     mapImage <- raster::crop(imageRaster,elevations)
@@ -184,6 +194,7 @@ draw3DMapTrack <- function(mapRaster,
                                         maxRasterize=5000,
                                         keepTouch=TRUE,
                                         silent=silent,noisy=noisy)
+      if (trackWidth > 0) trackRaster <- widenRasterTrack(trackRaster,trackWidth)
       temp <- as.matrix(trackRaster)
       temp[ is.na(temp)] <- 0
       col[temp >= 1] <- gplots::col2hex(trackColor)
@@ -202,12 +213,14 @@ draw3DMapTrack <- function(mapRaster,
       zpath <- trackdf$altitude.m  +  trackCurveHeight
     }
   }
+  yscale <- yRatio(mapRaster)  # CRS(mapraster) lonlat is ok
   
   #  and output the graph using rgl
-  rgl::par3d("windowRect"= c(100,100,1200,1000))
   userMatrix <- matrix(c(-0.02,-0.80,0.632,0,1,0,0.04,0,
                          -0.03,0.60,0.80,0,0,0,0,1),ncol=4,nrow=4)
+  rgl::open3d()  ## par3d after open3d because bug in rgl
   rgl::rgl.clear()
+  rgl::par3d("windowRect"= c(100,100,1200,1000),mouseMode = "trackball")
   rgl::surface3d(x,y,mmmelev,color=col)
   rgl::material3d(alpha=rglAlpha,
                   point_antialias=rglAntiAlias,
@@ -217,7 +230,7 @@ draw3DMapTrack <- function(mapRaster,
                   ambient=rglAmbient,emission=rglEmission,
                   specular=rglSpecular)
   rgl::aspect3d(x=1,y=1/yscale,z=0.035*vScale)
-  
+
   rgl::rgl.clear("lights")
   rgl::light3d(theta=rglTheta, phi=rglPhi, viewpoint.rel=TRUE,
                  specular=rglSpecular, diffuse=rglDiffuse,
@@ -227,7 +240,7 @@ draw3DMapTrack <- function(mapRaster,
   pan3d(2)  # right button for panning, doesn't play well with zoom)
   if (!is.null(trackdf) & trackCurve) {
     rgl::lines3d(xpath,ypath,zpath,
-                 lwd=2,col = trackColor, alpha=1.0)
+                 lwd=2+2*trackWidth,col = trackColor, alpha=1.0)
     
   }
   if (saveRGL) 
@@ -374,64 +387,8 @@ spXformNullOK <- function(sp,crs) {
     }
   }
 }
-trackpts_to_spPointDF <- function(trackdf,
-  gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
-  workProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") {
-  
-  if ("position_lon.dd" %in% names(trackdf)) {
-    lon <- trackdf$position_lon.dd
-    lat <- trackdf$position_lat.dd
-  } else if ("lon" %in% names(trackdf)) {
-    lon <- trackdf$lon
-    lat <- trackdf$lat
-  }
-  datadf <- data.frame(lon=lon,lat=lat)
-  if ("altitude.m" %in% names(trackdf)) {
-    datadf$altitude.m <- trackdf$altitude.m
-  } else {
-    datadf$altitude.m <- NA
-  }
-  if ("segment" %in% names(trackdf)) {
-    datadf$segment <- trackdf$segment
-  } else {
-    datadf$segment <- 1
-  }
-  retdf <-
-    SpatialPointsDataFrame(coords=datadf[,c("lon","lat")], 
-                           data=datadf,
-                           proj4string=CRS(gpsProj4))
-  if (as.character(gpsProj4) != as.character(workProj4)) {
-    retdf <- spXformNullOK(retdf,CRS(workProj4))
-  }   
-  return(retdf)
-}
-trackpts_to_lines <- function(lon, lat, id_field = NULL) {
-  # adapted from rpubs.com code by Kyle Walker
-  #  greatly simplified 
-  if (is.null(id_field)) id_field <- rep(1,length(lon))
-  
-  xy <- data.frame(lon=lon,lat=lat)
-  # enhance this to allow gps other than wgs84
-  trackProj4 <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"
-  datapts <- sp::SpatialPointsDataFrame(coords = xy, data = data.frame(id=id_field),
-                      proj4string = CRS(trackProj4))
-  #Split into a list by ID field
-  paths <- split(datapts, datapts[["id"]])
-  sp_lines <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[1]])), "track1")),
-                               proj4string = CRS(trackProj4))
-  idvec <- 1
-  if (length(paths)>1) {
-    for (p in 2:length(paths)) {
-      id <- paste0("track",p)
-      idvec <- c(idvec,p)
-      l <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[p]])), id)),
-                            proj4string = CRS(trackProj4))
-      sp_lines <- rbind(sp_lines, l)
-    }
-  }
-  temp <- data.frame("value"=idvec,
-                     row.names=paste0("track",idvec))
-  sp_lines <- sp::SpatialLinesDataFrame(sp_lines,
-                                        data=temp)
-  return(sp_lines)
+widenRasterTrack <- function(trackRaster,buffer=1) {
+  tlayer <- velox::velox(trackRaster)
+  tlayer$sumFocal(weights=matrix(1,2*buffer+1,2*buffer+1),bands=1)
+  return(tlayer$as.RasterLayer(band=1))
 }
