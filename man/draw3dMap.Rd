@@ -24,8 +24,8 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   rglEmission = "black", rglSmooth = TRUE, rglAlpha = 1,
   rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15,
   trackColor = "Magenta", trackCurve = FALSE, trackWidth = 0,
-  trackCurveElevFromRaster = TRUE, trackCurveHeight = 15, saveRGL = FALSE,
-  mapoutputdir = NULL, outputName = NULL,
+  trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
+  saveRGL = FALSE, mapoutputdir = NULL, outputName = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   maxrastercells = 2.5e+08, maxRasterize = 5e+05, polySimplify = 0,
   polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04,
@@ -38,7 +38,8 @@ the names "position_lon.dd" and "position_lat.dd") and are both
 numeric with decimal degrees, and segment(numeric) to identify 
 different paths or segments on a path.  If trackCurveElevFromRaster
 is FALSE, the data frame must include a column named altitude.m which 
-contains the elevation recorded by the GPS}
+contains the elevation recorded by the GPS.  The optional character
+variable color specifies the color on track segments}
 
 \item{mapWindow}{a vector of 4 numbers which describe the region drawn.
 The format is c(lon_min, lon_max, lat_min, lat_max)}

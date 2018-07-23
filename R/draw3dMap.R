@@ -17,7 +17,8 @@
 #'    numeric with decimal degrees, and segment(numeric) to identify 
 #'    different paths or segments on a path.  If trackCurveElevFromRaster
 #'    is FALSE, the data frame must include a column named altitude.m which 
-#'    contains the elevation recorded by the GPS
+#'    contains the elevation recorded by the GPS.  The optional character
+#'    variable color specifies the color on track segments 
 #' @param mapWindow a vector of 4 numbers which describe the region drawn.
 #'    The format is c(lon_min, lon_max, lat_min, lat_max)
 #'    
@@ -236,7 +237,7 @@ draw3dMap <- function(paths=NULL,
                       trackColor="Magenta",
                       trackCurve=FALSE,
                       trackWidth=0,
-                      trackCurveElevFromRaster=TRUE,
+                      trackCurveElevFromRaster=FALSE,
                       trackCurveHeight=15,
                       saveRGL=FALSE,mapoutputdir=NULL,outputName=NULL,
                       #  CRS, rasterization control
@@ -509,5 +510,79 @@ draw3dMap <- function(paths=NULL,
                    trackCurveHeight=trackCurveHeight,
                    mapoutputdir=mapoutputdir,outputName=outputName,
                    silent=silent,noisy=noisy) 
+  return(NULL)
+}
+#' set up call to draw3dMap with colors for the tracks
+#'
+#' \code{drawTrackCurves} draw 3D map from elevation and feature data,
+#'    and add a set of colored paths to the plot
+#'
+#' This is a wrapper for draw3dMap.
+#'
+#' @param paths dataframe see draw3dMap
+#' @param colorMode character either "track" where each segment in the path has 
+#'   a different color sequentially chosen from the palette, or "speed" where the 
+#'   pieces of the path are colored based on the speed recorded.
+#' @param drawPalette name of the palette to be used.  Options are "plasma",
+#'   "magma","viridis","heat","rainbow","red-blue-green","red-blue","default"
+#' @param ...  parameters passed to draw3dMap
+#' 
+#' @return NULL
+#' @export
+#' 
+drawColorTracks <- function(paths,drawPalette="default",colorMode="track",...) {
+                            #trackCurve=TRUE,...) {
+    
+  if (colorMode=="speed" & "speed.m.s" %in% names(paths)) {
+    if (drawPalette=="plasma") {
+      spdcolors <- rev(plasma(101))
+    } else if (drawPalette=="magma") {
+      spdcolors <- rev(magma(101))
+    } else if (drawPalette=="viridis") {
+      spdcolors <- rev(viridis(101))
+    } else if (drawPalette=="heat") {
+      spdcolors <- rev(heat.colors(101))
+    } else if (drawPalette=="rainbow") {
+      spdcolors <- (rainbow(101,start=0.15,end=1))
+    } else if (drawPalette=="red-blue-green") {
+      spdcolors <- colorRampPalette(c("red","blue","green"))(101)
+    } else if (drawPalette=="red-blue") {
+      spdcolors <- colorRampPalette(c("red","blue"))(101)
+    } else {
+      spdcolors <- colorRampPalette(c("red","orange","cornflowerblue",
+                                      "dodgerblue","blue","darkorchid",
+                                      "purple","magenta"))(101)
+    }
+    speed <- paths$speed.m.s*2.23694
+    speed[speed>40] <- 40
+    speed[speed<3] <- 3
+    paths$color <- spdcolors[floor(100*(speed - 3)/37) + 1]
+  } else {
+    segs <- unique(paths$segment)
+    if (drawPalette=="plasma") {
+      mapcvec <- viridis::plasma(length(segs),begin=0.0,end=0.7)
+    } else if (drawPalette=="magma") {
+        mapcvec <- viridis::plasma(length(segs),begin=0.0,end=0.7)
+    } else if (drawPalette=="viridis") {
+      mapcvec <- viridis::viridis(length(segs),begin=0.1,end=0.9)
+    } else if (drawPalette=="heat") {
+      mapcvec <- heat.colors(length(segs))
+    } else if (drawPalette=="rainbow") {
+      mapcvec <- rainbow(length(segs),start=0.2,end=0.9)
+    } else if (drawPalette=="red-blue-green") {
+      mapcvec <- colorRampPalette(c("red","blue","green"))(101)
+    } else if (drawPalette=="red-blue") {
+      mapcvec <- colorRampPalette(c("red","blue"))(101)
+    } else if (drawPalette=="default") {
+      mapcvec <- colorRampPalette(c("red","orange","cornflowerblue",
+                                    "dodgerblue","blue","darkorchid",
+                                    "purple","magenta"))(101)
+    } else {
+      mapcvec <- rep(drawPalette,length(segs))
+    }
+    paths$color <- mapcvec[match(paths$segment, segs)]
+  }
+  #draw3dMap(paths=paths,trackCurve=TRUE,...)
+  draw3dMap(paths=paths,...)
   return(NULL)
 }

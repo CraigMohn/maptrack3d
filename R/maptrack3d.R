@@ -19,7 +19,7 @@
 #' @import tigris rmapshaper OpenStreetMap  
 #' @import rgl htmlwidgets 
 #' @import viridis scico
-#' @importFrom grDevices colorRampPalette rgb
+#' @importFrom grDevices colorRampPalette rgb heat.colors rainbow dev.off
 #' @importFrom methods as
 #' @importFrom utils unzip
 #' @importFrom stringr str_pad

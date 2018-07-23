@@ -43,6 +43,7 @@ draw3DMapTrack <- function(mapRaster,
 
   if (!is.null(trackdf)) {
     trackdf <- trackNameFix(trackdf)
+    trackdf$color[is.na(trackdf$color)] <- trackColor
     if (trackCurve) {
       # points for drawing curve over surface  
       if (trackCurveElevFromRaster)               # if pulling elevs from 
@@ -50,12 +51,13 @@ draw3DMapTrack <- function(mapRaster,
       trackPoints <- trackpts_to_spPointDF(trackdf=trackdf,
                                            gpsProj4=gpsProj4,
                                            workProj4=raster::crs(mapRaster))
+      trackPoints <- raster::crop(trackPoints,mapRaster)
       if (trackCurveElevFromRaster) {
         # get altitude from raster 
         trackPoints@data[,"altitude.m"] <- 
                  raster::extract(mapRaster[["elevations"]],
                                  sp::coordinates(trackPoints),
-                                 method="simple")           
+                                 method="simple")  
       }
     } else {
        # lines for rasterizing to color cells on surface
@@ -96,8 +98,11 @@ draw3DMapTrack <- function(mapRaster,
     }
     if (!is.null(trackdf)) {
       if (!silent) print(paste0("projecting tracks to ",drawProj4))
-      trackLines <-  spXformNullOK(trackLines,CRS(drawProj4))
-      trackPoints <-  spXformNullOK(trackPoints,CRS(drawProj4))
+      if (trackCurve) {
+        trackPoints <-  spXformNullOK(trackPoints,CRS(drawProj4))
+      } else {
+        trackLines <-  spXformNullOK(trackLines,CRS(drawProj4))
+      }
     }
   }
   if (class(mapRaster)=="RasterLayer") {
@@ -189,15 +194,20 @@ draw3DMapTrack <- function(mapRaster,
   }
   if (!is.null(trackdf)) {
     if (!trackCurve) {
-      trackRaster <- shapeToRasterLayer(sxdf=trackLines,
-                                        templateRaster=elevations,
-                                        maxRasterize=5000,
-                                        keepTouch=TRUE,
-                                        silent=silent,noisy=noisy)
-      if (trackWidth > 0) trackRaster <- widenRasterTrack(trackRaster,trackWidth)
-      temp <- as.matrix(trackRaster)
-      temp[ is.na(temp)] <- 0
-      col[temp >= 1] <- gplots::col2hex(trackColor)
+      for (xxx in unique(trackLines@data$segment)) {
+        if (noisy) print(paste0("adding track ",xxx))
+        thisTrack <- trackLines[trackLines$segment == xxx,]
+        thisTrack$value <- 1
+        trackRaster <- shapeToRasterLayer(sxdf=thisTrack,
+                                          templateRaster=elevations,
+                                          maxRasterize=5000,
+                                          keepTouch=TRUE,
+                                          silent=silent,noisy=noisy)
+        if (trackWidth > 0) trackRaster <- widenRasterTrack(trackRaster,trackWidth)
+        temp <- as.matrix(trackRaster)
+        temp[ is.na(temp)] <- 0
+        col[temp >= 1] <- gplots::col2hex(thisTrack$color)
+      }
       trackRaster <- NULL
     } else {
       xmin <- raster::extent(mapRaster)[1]
@@ -211,6 +221,7 @@ draw3DMapTrack <- function(mapRaster,
       ypath <- xlen*(sp::coordinates(trackPoints)[,1]-xmin)/(xmax-xmin) -
         origin(mapRaster)[1]
       zpath <- trackdf$altitude.m  +  trackCurveHeight
+      cpath <- gplots::col2hex(trackdf$color)
     }
   }
   yscale <- yRatio(mapRaster)  # CRS(mapraster) lonlat is ok
@@ -239,9 +250,14 @@ draw3DMapTrack <- function(mapRaster,
   rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
   pan3d(2)  # right button for panning, doesn't play well with zoom)
   if (!is.null(trackdf) & trackCurve) {
-    rgl::lines3d(xpath,ypath,zpath,
-                 lwd=2+2*trackWidth,col = trackColor, alpha=1.0)
-    
+    for (xxx in unique(trackdf$segment)) {
+      if (noisy) print(paste0("adding track ",xxx))
+      rgl::lines3d(xpath[trackdf$segment==xxx],
+                   ypath[trackdf$segment==xxx],
+                   zpath[trackdf$segment==xxx],
+                   col=cpath[trackdf$segment==xxx],
+                   lwd=2+2*trackWidth, alpha=1.0)
+    }
   }
   if (saveRGL) 
     rgl::writeWebGL(dir=paste0(mapoutputdir), 

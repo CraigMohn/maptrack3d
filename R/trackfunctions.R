@@ -22,7 +22,7 @@ trackNameFix <- function(trackdf) {
     color <- NA
   }
   return(data.frame(lon=lon,lat=lat,altitude.m=altitude.m,
-                    segment=segment,color=color))
+                    segment=segment,color=color,stringsAsFactors=FALSE))
 }
 trackFill <- function(trackdf,maxdist=10) {
   npts <- nrow(trackdf)
@@ -58,7 +58,7 @@ trackFill <- function(trackdf,maxdist=10) {
   color <- rep(trackdf$color,outpts)
   
   return(data.frame(lon=lon,lat=lat,altitude.m=altitude.m,
-                    segment=segment,color=color))
+                    segment=segment,color=color,stringsAsFactors=FALSE))
 }
 trackpts_to_spPointDF <- function(trackdf,
   gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
@@ -86,17 +86,19 @@ trackpts_to_spLineDF <- function(trackdf,
   sp_lines <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[1]])), "track1")),
                                proj4string = CRS(gpsProj4))
   idvec <- 1
+  colorvec <- paths[[1]]$color[1]
   if (length(paths)>1) {
     for (p in 2:length(paths)) {
       id <- paste0("track",p)
       idvec <- c(idvec,p)
+      colorvec <- c(colorvec,paths[[p]]$color[1])
       l <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[p]])), id)),
                             proj4string = CRS(gpsProj4))
       sp_lines <- rbind(sp_lines, l)
     }
   }
-  temp <- data.frame("value"=idvec,
-                     row.names=paste0("track",idvec))
+  temp <- data.frame("segment"=idvec,"color"=colorvec,
+                     row.names=paste0("track",idvec),stringsAsFactors=FALSE)
   sp_lines <- sp::SpatialLinesDataFrame(sp_lines,
                                         data=temp)
   return(sp_lines)
