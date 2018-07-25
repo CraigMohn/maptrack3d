@@ -51,7 +51,7 @@ draw3DMapTrack <- function(mapRaster,
       trackPoints <- trackpts_to_spPointDF(trackdf=trackdf,
                                            gpsProj4=gpsProj4,
                                            workProj4=raster::crs(mapRaster))
-      trackPoints <- raster::crop(trackPoints,mapRaster)
+      trackPoints <- cropPointsDF(trackPoints,raster::extent(mapRaster))
       if (trackCurveElevFromRaster) {
         # get altitude from raster 
         trackPoints@data[,"altitude.m"] <- 
@@ -59,11 +59,13 @@ draw3DMapTrack <- function(mapRaster,
                                  sp::coordinates(trackPoints),
                                  method="simple")  
       }
+      trackLines <- NULL
     } else {
        # lines for rasterizing to color cells on surface
       trackLines <- trackpts_to_spLineDF(trackdf=trackdf,
                                          gpsProj4=gpsProj4,
                                          workProj4=raster::crs(mapRaster)) 
+      trackPoints <- NULL
     }
   }  
   if (!is.null(drawProj4)) { 
@@ -220,8 +222,8 @@ draw3DMapTrack <- function(mapRaster,
         origin(mapRaster)[2]
       ypath <- xlen*(sp::coordinates(trackPoints)[,1]-xmin)/(xmax-xmin) -
         origin(mapRaster)[1]
-      zpath <- trackdf$altitude.m  +  trackCurveHeight
-      cpath <- gplots::col2hex(trackdf$color)
+      zpath <- trackPoints$altitude.m  +  trackCurveHeight
+      cpath <- gplots::col2hex(trackPoints$color)
     }
   }
   yscale <- yRatio(mapRaster)  # CRS(mapraster) lonlat is ok
@@ -249,14 +251,18 @@ draw3DMapTrack <- function(mapRaster,
   
   rgl::rgl.viewpoint(userMatrix=userMatrix,type="modelviewpoint")
   pan3d(2)  # right button for panning, doesn't play well with zoom)
-  if (!is.null(trackdf) & trackCurve) {
-    for (xxx in unique(trackdf$segment)) {
-      if (noisy) print(paste0("adding track ",xxx))
-      rgl::lines3d(xpath[trackdf$segment==xxx],
-                   ypath[trackdf$segment==xxx],
-                   zpath[trackdf$segment==xxx],
-                   col=cpath[trackdf$segment==xxx],
-                   lwd=2+2*trackWidth, alpha=1.0)
+  if (length(trackdf)>0 & trackCurve) {
+    if (nrow(trackPoints) > 0) {
+      for (xxx in unique(trackPoints$segment)) {
+        if (noisy) print(paste0("adding track ",xxx))
+        for(yyy in unique(trackPoints$subseg[trackPoints$segment==xxx])) {
+          rgl::lines3d(xpath[trackPoints$segment==xxx & trackPoints$subseg==yyy],
+                       ypath[trackPoints$segment==xxx & trackPoints$subseg==yyy],
+                       zpath[trackPoints$segment==xxx & trackPoints$subseg==yyy],
+                       col=cpath[trackPoints$segment==xxx & trackPoints$subseg==yyy],
+                       lwd=2+2*trackWidth, alpha=1.0)
+        }
+      }
     }
   }
   if (saveRGL) 

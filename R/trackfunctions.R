@@ -22,7 +22,8 @@ trackNameFix <- function(trackdf) {
     color <- NA
   }
   return(data.frame(lon=lon,lat=lat,altitude.m=altitude.m,
-                    segment=segment,color=color,stringsAsFactors=FALSE))
+                    segment=segment,color=color,subseg=1,
+                    stringsAsFactors=FALSE))
 }
 trackFill <- function(trackdf,maxdist=10) {
   npts <- nrow(trackdf)
@@ -55,10 +56,12 @@ trackFill <- function(trackdf,maxdist=10) {
   lat <- origlat*wtleft + nextlat*(1-wtleft)
   altitude.m <- origalt*wtleft + nextalt*(1-wtleft)
   segment <- rep(trackdf$segment,outpts)
+  subseg <- rep(trackdf$subseg,outpts)
   color <- rep(trackdf$color,outpts)
   
   return(data.frame(lon=lon,lat=lat,altitude.m=altitude.m,
-                    segment=segment,color=color,stringsAsFactors=FALSE))
+                    segment=segment,color=color,subseg=subseg,
+                    stringsAsFactors=FALSE))
 }
 trackpts_to_spPointDF <- function(trackdf,
   gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
@@ -102,4 +105,25 @@ trackpts_to_spLineDF <- function(trackdf,
   sp_lines <- sp::SpatialLinesDataFrame(sp_lines,
                                         data=temp)
   return(sp_lines)
+}
+cropPointsDF <- function(spPoints,rasterExt) {
+  # remove the points of lines in spPoints which are outside extent
+  #  update subseg field to reflect breaks from section deletions
+
+  spPoly <- as(rasterExt,"SpatialPolygons")
+  sp::proj4string(spPoly) <- sp::proj4string(spPoints)
+  pointsInside <- sp::over(spPoints,spPoly)
+  pointsInside[is.na(pointsInside)] <- 0
+  lagInside <- c(0,pointsInside[-length(pointsInside)])
+  leadInside <- c(pointsInside[-1],0)
+  begsubseg <-  (pointsInside > 0) & (lagInside == 0)
+  endsubseg <- (pointsInside > 0) & (leadInside == 0)
+  begoutseg <- c(FALSE,endsubseg[-1])
+  endoutseg <- c(begsubseg[-1],FALSE)
+  pointsToUse <- pointsInside | begoutseg 
+  outPoints <- spPoints[as.logical(pointsToUse),]
+  begsubseg <- begsubseg[as.logical(pointsToUse)]
+  endoutseg <- endoutseg[as.logical(pointsToUse)]
+  outPoints$subseg <- cumsum(begsubseg) + endoutseg
+  return(outPoints)
 }
