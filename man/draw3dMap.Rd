@@ -2,7 +2,7 @@
 % Please edit documentation in R/draw3dMap.R
 \name{draw3dMap}
 \alias{draw3dMap}
-\title{render a 3-D map from elevation and data and 
+\title{render a 3-D map from elevation and shapefile data and 
    add a set of paths to the plot}
 \usage{
 draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
@@ -26,6 +26,7 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   trackColor = "Magenta", trackCurve = FALSE, trackWidth = 0,
   trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
   saveRGL = FALSE, mapoutputdir = NULL, outputName = NULL,
+  gapTooLong = 100,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   maxrastercells = 2.5e+08, maxRasterize = 5e+05, polySimplify = 0,
   polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04,
@@ -197,6 +198,9 @@ c("default","beach","viridis","plasma","terrain","oleron","snow","oslo",
 \item{mapoutputdir}{character location for saved html map file}
 
 \item{outputName}{name of saved html map}
+
+\item{gapTooLong}{numeric (meters). Sequential track observations which are
+farther aopart than this are not connected}
 
 \item{workProj4}{coordinate reference projection string}
 

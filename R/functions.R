@@ -56,6 +56,8 @@ sxdfMask <- function(sxdf,poly,keepTouch=FALSE) {
   #  return NULL if a) either is NULL or b) no overlap
   #  horrible multiple returns, but....
   if (is.null(sxdf) | is.null(poly)) return(NULL) 
+  #  ignore single point "lines" - should probably return it if the point is inside
+  if (dim(sxdf@lines[[1]]@Lines[[1]]@coords)[1] < 2) return(NULL)
   tmpdata <- sxdf@data
   tmp.1 <- rgeos::gIntersects(sxdf, poly, byid=TRUE)
   tmp.2 <- as.logical(apply(tmp.1, 2, function(x) {sum(x)} ))

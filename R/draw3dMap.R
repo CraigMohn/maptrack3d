@@ -1,4 +1,4 @@
-#' render a 3-D map from elevation and data and 
+#' render a 3-D map from elevation and shapefile data and 
 #'    add a set of paths to the plot
 #'
 #' \code{draw3dMap} draw 3D map from elevation and feature data,
@@ -122,6 +122,8 @@
 #' @param mapoutputdir character location for saved html map file
 #' @param outputName name of saved html map
 #' 
+#' @param gapTooLong numeric (meters). Sequential track observations which are
+#'    farther aopart than this are not connected
 #' @param workProj4 coordinate reference projection string
 #' @param maxrastercells maximum number of cells in each written raster
 #' @param maxRasterize number of number of items for calls to velox$rasterize
@@ -241,6 +243,7 @@ draw3dMap <- function(paths=NULL,
                       trackCurveHeight=15,
                       saveRGL=FALSE,mapoutputdir=NULL,outputName=NULL,
                       #  CRS, rasterization control
+                      gapTooLong=100,
                       workProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
                       maxrastercells=250000000,maxRasterize=500000,
                       polySimplify=0.0,polyMethod="vis", 
@@ -508,6 +511,7 @@ draw3dMap <- function(paths=NULL,
                    trackWidth=trackWidth,
                    trackCurveElevFromRaster=trackCurveElevFromRaster,
                    trackCurveHeight=trackCurveHeight,
+                   gapTooLong=gapTooLong,
                    mapoutputdir=mapoutputdir,outputName=outputName,
                    silent=silent,noisy=noisy) 
   return(NULL)
@@ -570,19 +574,18 @@ drawColorTracks <- function(paths,drawPalette="default",colorMode="track",...) {
     } else if (drawPalette=="rainbow") {
       mapcvec <- rainbow(length(segs),start=0.2,end=0.9)
     } else if (drawPalette=="red-blue-green") {
-      mapcvec <- colorRampPalette(c("red","blue","green"))(101)
+      mapcvec <- colorRampPalette(c("red","blue","green"))(length(segs))
     } else if (drawPalette=="red-blue") {
-      mapcvec <- colorRampPalette(c("red","blue"))(101)
+      mapcvec <- colorRampPalette(c("red","blue"))(length(segs))
     } else if (drawPalette=="default") {
       mapcvec <- colorRampPalette(c("red","orange","cornflowerblue",
                                     "dodgerblue","blue","darkorchid",
-                                    "purple","magenta"))(101)
+                                    "purple","magenta"))(length(segs))
     } else {
       mapcvec <- rep(drawPalette,length(segs))
     }
     paths$color <- mapcvec[match(paths$segment, segs)]
   }
-  #draw3dMap(paths=paths,trackCurve=TRUE,...)
   draw3dMap(paths=paths,...)
   return(NULL)
 }

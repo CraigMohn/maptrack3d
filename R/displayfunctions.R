@@ -29,6 +29,7 @@ draw3DMapTrack <- function(mapRaster,
                            trackWidth=0,
                            trackCurveElevFromRaster=TRUE,
                            trackCurveHeight=10,
+                           gapTooLong=100,
                            gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
                            saveRGL=FALSE,
                            mapoutputdir=NA,
@@ -42,7 +43,8 @@ draw3DMapTrack <- function(mapRaster,
                           "spWaterL"=1)
 
   if (!is.null(trackdf)) {
-    trackdf <- trackNameFix(trackdf)
+    trackdf <- trackNameFix(trackdf,gpsProj4=gpsProj4,gapTooLong=gapTooLong,
+                            noisy=noisy)
     trackdf$color[is.na(trackdf$color)] <- trackColor
     if (trackCurve) {
       # points for drawing curve over surface  
@@ -204,7 +206,7 @@ draw3DMapTrack <- function(mapRaster,
                                           templateRaster=elevations,
                                           maxRasterize=5000,
                                           keepTouch=TRUE,
-                                          silent=silent,noisy=noisy)
+                                          silent=!noisy,noisy=noisy)
         if (trackWidth > 0) trackRaster <- widenRasterTrack(trackRaster,trackWidth)
         temp <- as.matrix(trackRaster)
         temp[ is.na(temp)] <- 0
@@ -218,10 +220,8 @@ draw3DMapTrack <- function(mapRaster,
       ymax <- raster::extent(mapRaster)[4]
       xlen <- ncol(mapRaster)
       ylen <- nrow(mapRaster)
-      xpath <- ylen*(1 - (sp::coordinates(trackPoints)[,2]-ymin)/(ymax-ymin)) -
-        origin(mapRaster)[2]
-      ypath <- xlen*(sp::coordinates(trackPoints)[,1]-xmin)/(xmax-xmin) -
-        origin(mapRaster)[1]
+      xpath <- ylen*(1 - (sp::coordinates(trackPoints)[,2]-ymin)/(ymax-ymin)) 
+      ypath <- xlen*(sp::coordinates(trackPoints)[,1]-xmin)/(xmax-xmin)
       zpath <- trackPoints$altitude.m  +  trackCurveHeight
       cpath <- gplots::col2hex(trackPoints$color)
     }
