@@ -9,22 +9,25 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   CAProvincevec = NULL, USParkvec = NULL, parkDir = NULL,
   worldCountryvec = NULL, cropbox = NULL, mapbuffer = 0,
   mapmergebuffer = 0, rectangularMap = TRUE, elevDataSource = "SRTM",
-  mapDataDir = NULL, resstr = "_1arc_v3_bil", rasterFileSetNames = NULL,
-  featureDataSource = "none", shapefileDir = NULL, writeShapefiles = TRUE,
-  year = 2017, includeAllRoads = FALSE, zeroBufferTowns = FALSE,
-  zeroBufferWater = FALSE, useImageRaster = FALSE, writeElevFile = FALSE,
-  writeFeatureFile = FALSE, writeImageFile = FALSE, imageFilename = NULL,
-  rasterDir = NULL, rasterFileSetWriteName = NULL, drawRGL = TRUE,
-  res3dplot = 2500, drawProj4 = NULL, maxElev = 3000, vScale = 1.5,
-  townLevel = 3, roadLevel = 4, waterALevel = 4, waterLLevel = 5,
-  rglColorScheme = "default", mapColorDepth = 16, rglNAcolor = "Blue",
-  rglNegcolor = "Red", citycolor = "SlateGray", watercolor = "Blue",
-  roadcolor = "Black", glaciercolor = "White", rglShininess = 0.02,
-  rglSpecular = "black", rglDiffuse = "white", rglAmbient = "white",
-  rglEmission = "black", rglSmooth = TRUE, rglAlpha = 1,
-  rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15,
+  mapDataDir = NULL, resstr = "_1arc_v3_bil",
+  rasterFileSetNames = NULL, featureDataSource = "none",
+  shapefileDir = NULL, writeShapefiles = TRUE, year = 2017,
+  includeAllRoads = FALSE, zeroBufferTowns = FALSE,
+  zeroBufferWater = FALSE, useImageRaster = FALSE,
+  writeElevFile = FALSE, writeFeatureFile = FALSE,
+  writeImageFile = FALSE, imageFilename = NULL, rasterDir = NULL,
+  rasterFileSetWriteName = NULL, drawRGL = TRUE, res3dplot = 2500,
+  drawProj4 = NULL, maxElev = 3000, minElev = 0, vScale = 1.5,
+  seaLevel = NA, simpleSeaLevel = FALSE, townLevel = 3,
+  roadLevel = 4, waterALevel = 4, waterLLevel = 5,
+  rglColorScheme = "default", mapColorDepth = 16,
+  rglNAcolor = "Blue", rglNegcolor = "Red", citycolor = "SlateGray",
+  watercolor = "Blue", roadcolor = "Black", glaciercolor = "White",
+  rglShininess = 0.02, rglSpecular = "black", rglDiffuse = "white",
+  rglAmbient = "white", rglEmission = "black", rglSmooth = TRUE,
+  rglAlpha = 1, rglAntiAlias = TRUE, rglTheta = 0, rglPhi = 15,
   trackColor = "Magenta", trackCurve = FALSE, trackWidth = 0,
-  trackCurveElevFromRaster = FALSE, trackCurveHeight = 15,
+  trackCurveElevFromRaster = FALSE, trackCurveHeight = 10,
   saveRGL = FALSE, mapoutputdir = NULL, outputName = NULL,
   gapTooLong = 100,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
@@ -122,9 +125,17 @@ of the output height times width.  aggregation done in integer multiples.}
 \item{drawProj4}{string containing the projection to use in drawing the map,
 "UTM" (zone based on center of map),"Lambert","Albers", or any Proj4 string}
 
-\item{maxElev}{numeric, all elevations greater than this are colored the same}
+\item{maxElev}{numeric, all elevations greater than this are colored at the
+high end of the palette}
+
+\item{minElev}{numeric, all elevations less than this are colored at the
+low end of the palette}
 
 \item{vScale}{numeric vertical scale parameter, try bigger values for smaller areas}
+
+\item{seaLevel}{numeric, fill water to this level if specified}
+
+\item{simpleSeaLevel}{logical, flood if below seaLevel even if not connected to edge}
 
 \item{townLevel}{numeric, display towns ranked this number or higher: 
 3=all towns     5=larger towns (in US >50k)}

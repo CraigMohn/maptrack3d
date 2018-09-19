@@ -1,4 +1,6 @@
-trackNameFix <- function(trackdf) {
+trackNameFix <- function(trackdf,
+                         gpsProj4="+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
+                         gapTooLong=100,noisy=FALSE) {
   if ("position_lon.dd" %in% names(trackdf)) {
     lon <- trackdf$position_lon.dd
     lat <- trackdf$position_lat.dd
@@ -14,18 +16,26 @@ trackNameFix <- function(trackdf) {
   if ("segment" %in% names(trackdf)) {
     segment <- trackdf$segment
   } else {
-    segment <- 1
+    segment <- rep(1,nrow(trackdf))
   }
   if ("color"  %in% names(trackdf)) {
     color <- trackdf$color
   } else {
     color <- NA
   }
+  distToPrev <- 
+            c(0,raster::pointDistance(cbind(lon[-1],lat[-1]),
+                                      cbind(lon[-length(lon)],lat[-length(lat)]),
+                                      lonlat=grepl("+proj=longlat",gpsProj4)))
+  newSegment <- (distToPrev >= gapTooLong) & 
+                c(TRUE,segment[-1]==segment[-length(segment)])
+  if(noisy) print(paste0(sum(newSegment)," new segments"))
   return(data.frame(lon=lon,lat=lat,altitude.m=altitude.m,
-                    segment=segment,color=color,subseg=1,
+                    segment=segment+cumsum(newSegment),
+                    color=color,subseg=1,
                     stringsAsFactors=FALSE))
 }
-trackFill <- function(trackdf,maxdist=10) {
+trackFill <- function(trackdf,maxdist=20) {
   npts <- nrow(trackdf)
   dists <- raster::pointDistance(as.matrix(trackdf[-1,c("lon","lat")]),
                                  as.matrix(trackdf[1:(npts-1),c("lon","lat")]),
@@ -104,6 +114,8 @@ trackpts_to_spLineDF <- function(trackdf,
                      row.names=paste0("track",idvec),stringsAsFactors=FALSE)
   sp_lines <- sp::SpatialLinesDataFrame(sp_lines,
                                         data=temp)
+  if (as.character(gpsProj4) != as.character(workProj4))
+    sp_lines <- spTransform(sp_lines,crs(workProj4))
   return(sp_lines)
 }
 cropPointsDF <- function(spPoints,rasterExt) {

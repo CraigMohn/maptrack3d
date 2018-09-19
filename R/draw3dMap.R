@@ -74,8 +74,13 @@
 #'    of the output height times width.  aggregation done in integer multiples.
 #' @param drawProj4 string containing the projection to use in drawing the map,
 #'    "UTM" (zone based on center of map),"Lambert","Albers", or any Proj4 string
-#' @param maxElev numeric, all elevations greater than this are colored the same
+#' @param maxElev numeric, all elevations greater than this are colored at the
+#'    high end of the palette
+#' @param minElev numeric, all elevations less than this are colored at the
+#'    low end of the palette
 #' @param vScale numeric vertical scale parameter, try bigger values for smaller areas
+#' @param seaLevel numeric, fill water to this level if specified
+#' @param simpleSeaLevel logical, flood if below seaLevel even if not connected to edge
 #' @param townLevel numeric, display towns ranked this number or higher: 
 #'    3=all towns     5=larger towns (in US >50k)
 #' @param roadLevel numeric, display roads ranked this number or higher:
@@ -222,7 +227,8 @@ draw3dMap <- function(paths=NULL,
                       #  plotting control
                       drawRGL=TRUE,
                       res3dplot=2500,drawProj4=NULL,
-                      maxElev=3000,vScale=1.5,
+                      maxElev=3000,minElev=0,vScale=1.5,
+                      seaLevel=NA,simpleSeaLevel=FALSE,
                       townLevel=3,roadLevel=4,waterALevel=4,waterLLevel=5,
                       rglColorScheme="default",mapColorDepth=16,
                       rglNAcolor="Blue",rglNegcolor="Red",
@@ -240,7 +246,7 @@ draw3dMap <- function(paths=NULL,
                       trackCurve=FALSE,
                       trackWidth=0,
                       trackCurveElevFromRaster=FALSE,
-                      trackCurveHeight=15,
+                      trackCurveHeight=10,
                       saveRGL=FALSE,mapoutputdir=NULL,outputName=NULL,
                       #  CRS, rasterization control
                       gapTooLong=100,
@@ -483,7 +489,7 @@ draw3dMap <- function(paths=NULL,
     )[[3]],digits=2)
     if (!silent) print(paste0("  ",temptime," masking"))
   }
-  if (useImageRaster) {
+  if (useImageRaster & rglColorScheme %in% c("bing","apple-iphoto","stamen-terrain")) {
     imageRaster <- loadSavedImageData(savedNameVec=savedRasterVec,
                                       rasterDir=rasterDir,
                                       imageSource=rglColorScheme,
@@ -494,7 +500,9 @@ draw3dMap <- function(paths=NULL,
   if (drawRGL)
     draw3DMapTrack(mapRaster=elevations,trackdf=paths,spList=spList,
                    featureLevels=filterList, #towns,roads,waterA,waterL
-                   maxElev=maxElev,vScale=vScale,drawProj4=drawProj4,
+                   maxElev=maxElev,minElev=minElev,vScale=vScale,
+                   seaLevel=seaLevel,simpleSeaLevel=simpleSeaLevel,
+                   drawProj4=drawProj4,
                    rglColorScheme=rglColorScheme,
                    mapColorDepth=mapColorDepth,
                    imageFilename=imageFilename,

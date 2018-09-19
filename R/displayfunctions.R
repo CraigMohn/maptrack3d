@@ -3,7 +3,10 @@ draw3DMapTrack <- function(mapRaster,
                            spList=NULL,  # overrides feature layers in rasterStack 
                            featureLevels=NULL,
                            maxElev=3000,
+                           minElev=0,
                            vScale=1.5,
+                           seaLevel=NA,
+                           simpleSeaLevel=FALSE,
                            drawProj4=NULL,
                            rglColorScheme="default",
                            mapColorDepth=16,
@@ -149,18 +152,17 @@ draw3DMapTrack <- function(mapRaster,
              ncol=nrow(mmmelev),nrow=ncol(mmmelev)))
   } else {                           
     #  assign elevation-based colors 
-    tcolors <- terrainColors(rglColorScheme,206)
-    tmpelev <- mmmelev/maxElev    #  rescale in terms of maximum
+    tcolors <- terrainColors(rglColorScheme,201)
+    tmpelev <- (mmmelev-minElev)/(maxElev-minElev)    #  rescale it to unit interval
     tmpelev[is.na(tmpelev)] <- 0
     #tmpelev <- sign(tmpelev)*sqrt(abs(tmpelev)) # f(0)=0, f(1)=1, f'(x>0) decreasing, reasonable for x<0 
-    tmpelev[mmmelev <= 0] <- 0  #  go off original 
+    tmpelev[mmmelev <= minElev] <- 0 
     colidx <- floor(200*tmpelev) + 1
     colidx[colidx>201] <- 201   #  cap at maxElev
-    colidx[colidx<1] <- 1       #  and at 0
-    colidx <- colidx + 5
+    colidx[colidx<1] <- 1       #  and at minElev
     colidx[mmmelev == 0]  <- 1
     col <- tcolors[colidx]
-    if (!is.na(rglNegcolor)) col[mmmelev < -10] <- gplots::col2hex(rglNegcolor)
+    if (!is.na(rglNegcolor)) col[mmmelev < minElev] <- gplots::col2hex(rglNegcolor)
   }
   if (!is.na(rglNAcolor)) {
     col[is.na(mmmelev)] <- gplots::col2hex(rglNAcolor)
@@ -199,9 +201,9 @@ draw3DMapTrack <- function(mapRaster,
   if (!is.null(trackdf)) {
     if (!trackCurve) {
       for (xxx in unique(trackLines@data$segment)) {
-        if (noisy) print(paste0("adding track ",xxx))
         thisTrack <- trackLines[trackLines$segment == xxx,]
         thisTrack$value <- 1
+        if (noisy) print(paste0("adding track ",xxx,"  color=",thisTrack$color))
         trackRaster <- shapeToRasterLayer(sxdf=thisTrack,
                                           templateRaster=elevations,
                                           maxRasterize=5000,
@@ -225,6 +227,14 @@ draw3DMapTrack <- function(mapRaster,
       zpath <- trackPoints$altitude.m  +  trackCurveHeight
       cpath <- gplots::col2hex(trackPoints$color)
     }
+  }
+  #  sea level rise
+  if (!is.na(seaLevel)) {
+    flooded <- raster::as.matrix(fillSeaLevel(rLayer=elevations,
+                                              newSeaLevel=seaLevel,
+                                              simpleSeaLevel=simpleSeaLevel))
+    mmmelev[flooded] <- seaLevel
+    col[flooded] <- gplots::col2hex(watercolor)    
   }
   yscale <- yRatio(mapRaster)  # CRS(mapraster) lonlat is ok
   
@@ -254,7 +264,8 @@ draw3DMapTrack <- function(mapRaster,
   if (length(trackdf)>0 & trackCurve) {
     if (nrow(trackPoints) > 0) {
       for (xxx in unique(trackPoints$segment)) {
-        if (noisy) print(paste0("adding track ",xxx))
+        if (noisy) print(paste0("adding track ",xxx,
+                                "  color=",cpath[trackPoints$segment==xxx][1]))
         for(yyy in unique(trackPoints$subseg[trackPoints$segment==xxx])) {
           rgl::lines3d(xpath[trackPoints$segment==xxx & trackPoints$subseg==yyy],
                        ypath[trackPoints$segment==xxx & trackPoints$subseg==yyy],
@@ -274,7 +285,7 @@ terrainColors <- function(palettename="default",numshades=206) {
   # print(paste0("drawing map using ",palettename," for color"))
   if (palettename == "beach") {
     terrcolors <- 
-      colorRampPalette(c("blue","bisque1","bisque2","bisque3",
+      colorRampPalette(c("bisque1","bisque2","bisque3",
                          "palegreen","greenyellow","lawngreen",
                          "chartreuse","green","springgreen",
                          "limegreen","forestgreen","darkgreen",
@@ -305,7 +316,7 @@ terrainColors <- function(palettename="default",numshades=206) {
       pals::gnuplot(2*numshades)[floor(3*numshades/5):(floor(3*numshades/5)+numshades)]
   } else {  #"default"
     terrcolors <-
-      colorRampPalette(c("blue","darkturquoise","turquoise","aquamarine",
+      colorRampPalette(c("turquoise","aquamarine",
                          "palegreen","greenyellow","lawngreen",
                          "chartreuse","green","springgreen",
                          "limegreen","forestgreen","darkgreen",
@@ -414,3 +425,23 @@ widenRasterTrack <- function(trackRaster,buffer=1) {
   tlayer$sumFocal(weights=matrix(1,2*buffer+1,2*buffer+1),bands=1)
   return(tlayer$as.RasterLayer(band=1))
 }
+fillSeaLevel <- function(rLayer,newSeaLevel,simpleSeaLevel=FALSE) {
+  underSea <- rLayer <= newSeaLevel
+  if (!simpleSeaLevel) {
+    waterClumps <- raster::clump(underSea)
+    waterClumps[is.na(waterClumps[])] <- 0
+    for (lumpid in unique(waterClumps)) {
+      if (lumpid != 0) {
+        #  does the clump hit the edge of the map?
+        #  if not, then not flooded
+        temp <- as.matrix(waterClumps==lumpid)
+        if (sum(temp[1,]) + sum(temp[nrow(temp),]) +
+            sum(temp[,1]) + sum(temp[,ncol(temp)]) == 0)
+          waterClumps[waterClumps[]==lumpid] <- 0
+      }
+    }
+    underSea <- waterClumps > 0
+  }
+  return(underSea)
+}
+

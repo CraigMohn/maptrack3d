@@ -1,5 +1,5 @@
 loadMapElevData <- function(mapshape,mapDataDir,resstr,
-                            noisy=TRUE,silent=FALSE,
+                            noisy=FALSE,silent=FALSE,
                             latLimit=59) {
 
   m.sub <- NULL
@@ -8,10 +8,13 @@ loadMapElevData <- function(mapshape,mapDataDir,resstr,
   mapextent <- raster::extent(mapshape)
   if (!silent) print(mapextent)
 
-  NLatMin <- floor(max(mapextent@ymin,0))
-  NLatMax <- floor(max(mapextent@ymax,0))
-  SLatMin <- ceiling(max(-mapextent@ymax,0))
-  SLatMax <- ceiling(max(-mapextent@ymin,0))
+  latIncr <- ifelse(is.null(mapDataDir),5,1) #CGIAR returns 5x5 tiles
+  lonIncr <- ifelse(is.null(mapDataDir),5,1) #CGIAR returns 5x5 tiles
+  
+  NLatMin <- latIncr*floor(max(mapextent@ymin/latIncr,0))
+  NLatMax <- latIncr*floor(max(mapextent@ymax/latIncr,0))
+  SLatMin <- latIncr*ceiling(max(-mapextent@ymax/latIncr,0))
+  SLatMax <- latIncr*ceiling(max(-mapextent@ymin/latIncr,0))
 
   if (!is.null(mapDataDir))tempd <- tempdir()
   unfoundfn <- NULL
@@ -20,17 +23,19 @@ loadMapElevData <- function(mapshape,mapDataDir,resstr,
   firstOrigin <- NULL
   #  loop over N hemisphere from equator, then S from equator (highest res data there)
   latseq <- NULL
-  if (NLatMax>0) latseq <- seq(from=NLatMin,to=min(NLatMax,latLimit))
-  if (SLatMax>0) latseq <- c(latseq,-seq(from=(SLatMin+1),to=min(SLatMax,latLimit)))
-  lonseq <- seq(from=floor(mapextent@xmin),to=floor(mapextent@xmax))
-
+  if (NLatMax>0) latseq <- seq(from=NLatMin,to=min(NLatMax,latLimit),
+                               by=latIncr)
+  if (SLatMax>0) latseq <- c(latseq,-seq(from=(SLatMin+1),to=min(SLatMax,latLimit),
+                                         by=latIncr))
+  lonseq <- seq(from=lonIncr*floor(mapextent@xmin/lonIncr),
+                to=lonIncr*floor(mapextent@xmax/lonIncr),
+                by=lonIncr)
   for (lat in latseq) {
     for (lon in lonseq) {
-      pgon <- sp::Polygon(cbind(c(lon,(lon+1),(lon+1),lon,lon),
-                                c(lat,lat,(lat+1),(lat+1),lat)))
-      ei <- sp::SpatialPolygons(list(Polygons(list(pgon), ID = "1deg")),
+      pgon <- sp::Polygon(cbind(c(lon,(lon+lonIncr),(lon+lonIncr),lon,lon),
+                                c(lat,lat,(lat+latIncr),(lat+latIncr),lat)))
+      ei <- sp::SpatialPolygons(list(Polygons(list(pgon), ID = "xdeg")),
                                 proj4string=CRS(sp::proj4string(mapshape)))
-                                #proj4string=CRS("+proj=longlat +ellps=WGS84 +towgs84=0,0,0 +no_defs"))
       if (rgeos::gIntersects(mapshape, ei)) {
         if (is.null(mapDataDir)) {
           #  need to fix to handle no tile returned
@@ -44,6 +49,7 @@ loadMapElevData <- function(mapshape,mapDataDir,resstr,
             unzip(paste0(mapDataDir,"/",fname),exdir=tempd)
             rname <- gsub("_bil","",tools::file_path_sans_ext(fname))
             tmp <- raster(paste0(tempd,"/",rname,".bil"))
+            if (noisy) print(tmp)
           } else {
             if (!silent) print(paste0(mapDataDir,"/",fname," does not exist, ignored"))
             tmp <- NULL
@@ -90,6 +96,7 @@ loadMapElevData <- function(mapshape,mapDataDir,resstr,
             if (max(abs(firstOrigin-raster::origin(tmp))) > 0.000001)  
               warning("origin mismatch - ",raster::origin(tmp)," ",firstOrigin)
           }
+          if (noisy) plot(tmp)
           if (!rgeos::gContainsProperly(mapshape, ei)) {
             temp <- system.time(
               tmp <- raster::mask(raster::crop(tmp, extent(mapshape),snap="near"),
