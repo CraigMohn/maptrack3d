@@ -526,7 +526,7 @@ draw3dMap <- function(paths=NULL,
 }
 #' set up call to draw3dMap with colors for the tracks
 #'
-#' \code{drawTrackCurves} draw 3D map from elevation and feature data,
+#' \code{drawColorTracks} draw 3D map from elevation and feature data,
 #'    and add a set of colored paths to the plot
 #'
 #' This is a wrapper for draw3dMap.
