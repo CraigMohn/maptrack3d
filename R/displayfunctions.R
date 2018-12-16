@@ -230,9 +230,13 @@ draw3DMapTrack <- function(mapRaster,
   }
   #  sea level rise
   if (!is.na(seaLevel)) {
-    flooded <- raster::as.matrix(fillSeaLevel(rLayer=elevations,
-                                              newSeaLevel=seaLevel,
-                                              simpleSeaLevel=simpleSeaLevel))
+    temptime <- round(system.time(
+      flooded <- raster::as.matrix(fillSeaLevel(rLayer=elevations,
+                                                newSeaLevel=seaLevel,
+                                                simpleSeaLevel=simpleSeaLevel,
+                                                noisy=noisy))
+     )[[3]],digits=2)
+    if (noisy) print(paste0("sea level calc time = ",temptime))
     mmmelev[flooded] <- seaLevel
     col[flooded] <- gplots::col2hex(watercolor)    
   }
@@ -425,11 +429,13 @@ widenRasterTrack <- function(trackRaster,buffer=1) {
   tlayer$sumFocal(weights=matrix(1,2*buffer+1,2*buffer+1),bands=1)
   return(tlayer$as.RasterLayer(band=1))
 }
-fillSeaLevel <- function(rLayer,newSeaLevel,simpleSeaLevel=FALSE) {
+fillSeaLevel <- function(rLayer,newSeaLevel,
+                         simpleSeaLevel=FALSE,noisy=FALSE) {
   underSea <- rLayer <= newSeaLevel
   if (!simpleSeaLevel) {
     waterClumps <- raster::clump(underSea)
     waterClumps[is.na(waterClumps[])] <- 0
+    if (noisy) print(paste0(length(unique(waterClumps))-1," clumps - sea level"))
     for (lumpid in unique(waterClumps)) {
       if (lumpid != 0) {
         #  does the clump hit the edge of the map?

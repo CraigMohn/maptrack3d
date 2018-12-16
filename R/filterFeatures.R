@@ -10,18 +10,18 @@ filterFeatures <- function(spList,filterList=NULL) {
   
   spListFiltered <- spList
   for (x in names(spList)) {
-    if (length(filterList[[x]])>0) {
+    if ((length(filterList[[x]])>0) & length(spList[[x]])>0) {
       temp <- spList[[x]]
       xx <- sub("sp","",x)
       xx <- paste(tolower(substr(xx,1,1)),substr(xx,2,nchar(xx)),sep="")
-      rankf <- get(paste0(xx,"Rank"))
+      rankf <- get(paste0(xx,"Rank"))      ## functions below
       if ("size" %in% names(temp@data)) {
         temp$value <- rankf(temp@data[,"TYPE"],temp@data[,"NAME"],temp@data[,"size"])
       } else {
         temp$value <- rankf(temp@data[,"TYPE"],temp@data[,"NAME"])
       }
+      spListFiltered[[x]] <- temp[temp$value>=filterList[[x]],]
     }
-    spListFiltered[[x]] <- temp[temp$value>=filterList[[x]],]
   }
   return(spListFiltered)
 }

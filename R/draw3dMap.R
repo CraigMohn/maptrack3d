@@ -473,7 +473,6 @@ draw3dMap <- function(paths=NULL,
     if (!silent) print(paste0(" ",temptime))
     if (!silent) print(paste0(elevations@ncols," columns by ",elevations@nrows," rows"))
   }
-
   if ( featureDataSource %in% c("Shapefiles","TIGER") &
       # and we have not generated a raster for native Proj4 
        ( is.null(featureStack) | !is.null(drawProj4) ) ) {

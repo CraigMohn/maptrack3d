@@ -13,7 +13,6 @@ buildFeatureStack <- function(baseLayer,mapshape,
                               silent=FALSE,noisy=FALSE) {
   #  baseLayer a rasterLayer
   #  returns a rasterStack  which has 4 layers which can be stored as ints
-  
   #  collapse this down to spList and filterList
   bLrect <- as(raster::extent(baseLayer), "SpatialPolygons")
   sp::proj4string(bLrect) <- raster::crs(baseLayer)
