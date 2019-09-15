@@ -141,6 +141,8 @@
 #' @param silent logical, suppress most output
 #' @param noisy logical, more output to track progress 
 #' 
+#' @param ... arguments for other functions
+#' 
 #' @return NULL
 #' 
 #' @examples 
@@ -254,7 +256,7 @@ draw3dMap <- function(paths=NULL,
                       maxrastercells=250000000,maxRasterize=500000,
                       polySimplify=0.0,polyMethod="vis", 
                       polyWeighting=0.85,polySnapInt=0.0001,
-                      silent=FALSE,noisy=FALSE) {
+                      silent=FALSE,noisy=FALSE,...) {
 
   elevDataSource <- argCaseFix(elevDataSource,c("Raster","SRTM"))
   featureDataSource <- argCaseFix(featureDataSource,c("Raster","Shapefiles","TIGER","none"))
