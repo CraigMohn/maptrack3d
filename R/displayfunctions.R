@@ -37,8 +37,8 @@ draw3DMapTrack <- function(mapRaster,
                            saveRGL=FALSE,
                            mapoutputdir=NA,
                            outputName="most recent",
-                           silent=FALSE,noisy=FALSE) {
-  
+                           silent=FALSE,noisy=FALSE,
+                           ...) {
   if (is.null(featureLevels)) 
     featureLevels <- list("spTown"=1,
                           "spRoads"=1,

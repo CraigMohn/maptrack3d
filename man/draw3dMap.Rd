@@ -33,7 +33,7 @@ draw3dMap(paths = NULL, mapWindow = NULL, USStatevec = NULL,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
   maxrastercells = 2.5e+08, maxRasterize = 5e+05, polySimplify = 0,
   polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04,
-  silent = FALSE, noisy = FALSE)
+  silent = FALSE, noisy = FALSE, ...)
 }
 \arguments{
 \item{paths}{a set of segments which are contained in a 
@@ -231,6 +231,8 @@ for rmapshaper::ms_simplify}
 \item{silent}{logical, suppress most output}
 
 \item{noisy}{logical, more output to track progress}
+
+\item{...}{arguments for other functions}
 }
 \description{
 \code{draw3dMap} draw 3D map from elevation and feature data,
