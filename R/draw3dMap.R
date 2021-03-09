@@ -131,7 +131,7 @@
 #'    farther aopart than this are not connected
 #' @param workProj4 coordinate reference projection string
 #' @param maxrastercells maximum number of cells in each written raster
-#' @param maxRasterize number of number of items for calls to velox$rasterize
+#' @param maxRasterize number of number of items for calls to rasterize
 #' @param polySimplify numeric, amount of polygon simplification, see help
 #'    for rmapshaper::ms_simplify 
 #' @param polyMethod simplification method either "vis" or "dp"

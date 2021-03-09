@@ -4,8 +4,7 @@
 \alias{drawColorTracks}
 \title{set up call to draw3dMap with colors for the tracks}
 \usage{
-drawColorTracks(paths, drawPalette = "default", colorMode = "track",
-  ...)
+drawColorTracks(paths, drawPalette = "default", colorMode = "track", ...)
 }
 \arguments{
 \item{paths}{dataframe see draw3dMap}

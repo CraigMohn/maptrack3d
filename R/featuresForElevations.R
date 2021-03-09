@@ -96,7 +96,7 @@ elevationsToRaster <- function(rasterFileSetName="default",
 #'    boundary inconsistencies
 #' @param sliceFeatureBuffer numeric value to expand the extent of the area
 #'    used to estrict features befire rasterization
-#' @param maxRasterize number of items for calls to velox$rasterize
+#' @param maxRasterize number of items for calls to rasterize
 #' @param polyClean fix topology errors
 #' @param polySimplify amount of polygon simplification, see help
 #'    for rmapshaper::ms_simplify 

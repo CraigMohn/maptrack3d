@@ -156,7 +156,7 @@ shapeToRasterLayer <- function(sxdf,templateRaster,
   sp::proj4string(CP) <- raster::crs(templateRaster)
   sxdf <- sxdfMask(sxdf,CP,keepTouch=keepTouch) 
   if (!is.null(sxdf)) {
-    sxdf <- sxdf[order(sxdf$value),]  #  sort for velox rasterize
+    sxdf <- sxdf[order(sxdf$value),]  #  sort for rasterize
     if (class(sxdf)=="SpatialPolygonsDataFrame") {
       if (polySimplify>0) {
         sxdf <- rmapshaper::ms_simplify(sxdf,keep=polySimplify,
@@ -172,18 +172,22 @@ shapeToRasterLayer <- function(sxdf,templateRaster,
       firstrow <- (i-1)*maxRasterize + 1
       lastrow <- min(i*maxRasterize,nrow(sxdf))
       gc()        #  cleanup, this takes a lot of memory
-      rlayer <- velox::velox(zeroRaster)
+      #rlayer <- velox::velox(zeroRaster)
+      rlayer <- zeroRaster
       temptime <- round(system.time(
-        rlayer$rasterize(spdf=sxdf[firstrow:lastrow,],field="value",background=0)
+        #rlayer$rasterize(spdf=sxdf[firstrow:lastrow,],field="value",background=0)
+        rlayer <- rasterize(sxdf[firstrow:lastrow,],rlayer,field="value",background=0)
       )[[3]],digits=2)
       if (!silent) print(paste0("  ",temptime," rasterizing"))
       if (nloops>1) {
         temptime <- round(system.time(
-          retRaster <- maxLayerValue(retRaster,rlayer$as.RasterLayer(band=1))
+          #retRaster <- maxLayerValue(retRaster,rlayer$as.RasterLayer(band=1))
+          retRaster <- maxLayerValue(retRaster,rlayer)
         )[[3]],digits=2)
         if (!silent) print(paste0("  ",temptime," combining"))
       } else {
-        retRaster <- rlayer$as.RasterLayer(band=1)
+        #retRaster <- rlayer$as.RasterLayer(band=1)
+        retRaster <- rlayer
       }
     } 
   }

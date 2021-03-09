@@ -6,7 +6,7 @@ Date: 2018-07-19
 Author: Craig Mohn
 Maintainer: Craig Mohn <craig.mohn.projects@gmail.com>
 Depends: R (>= 3.3.0)
-Imports: tidyverse, raster, sp, rgdal, rgeos, sf, velox, cleangeo, tigris, 
+Imports: tidyverse, raster, sp, rgdal, rgeos, sf, cleangeo, tigris, 
     rmapshaper, OpenStreetMap, rgl, htmlwidgets, viridis, scico, pals, methods,
     gplots, stringr
 Description: Functions to draw 3d maps and paths on them incorporating US TIGER
@@ -15,4 +15,4 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 ByteCompile: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1

@@ -425,9 +425,11 @@ spXformNullOK <- function(sp,crs) {
   }
 }
 widenRasterTrack <- function(trackRaster,buffer=1) {
-  tlayer <- velox::velox(trackRaster)
-  tlayer$sumFocal(weights=matrix(1,2*buffer+1,2*buffer+1),bands=1)
-  return(tlayer$as.RasterLayer(band=1))
+  #tlayer <- velox::velox(trackRaster)
+  #tlayer$sumFocal(weights=matrix(1,2*buffer+1,2*buffer+1),bands=1)
+  #return(tlayer$as.RasterLayer(band=1))
+  return(focal(trackRaster,
+               w=matrix(1,2*buffer+1,2*buffer+1)))
 }
 fillSeaLevel <- function(rLayer,newSeaLevel,
                          simpleSeaLevel=FALSE,noisy=FALSE) {

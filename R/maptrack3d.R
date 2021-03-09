@@ -15,7 +15,7 @@
 #'
 #'
 #' @import tidyverse 
-#' @import raster sp rgdal sf velox cleangeo
+#' @import raster sp rgdal sf cleangeo
 #' @import tigris rmapshaper OpenStreetMap  
 #' @import rgl htmlwidgets 
 #' @import viridis scico

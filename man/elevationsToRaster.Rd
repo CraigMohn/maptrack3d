@@ -4,13 +4,24 @@
 \alias{elevationsToRaster}
 \title{Create and save a raster fileset specified}
 \usage{
-elevationsToRaster(rasterFileSetName = "default", rasterDir, mapDataDir,
-  USStatevec = NULL, CAProvincevec = NULL, USParkvec = NULL,
-  worldCountryvec = NULL, mapWindow = NULL, cropbox = NULL,
-  parkDir = NULL, mapbuffer = 0, mapmergebuffer = 0,
+elevationsToRaster(
+  rasterFileSetName = "default",
+  rasterDir,
+  mapDataDir,
+  USStatevec = NULL,
+  CAProvincevec = NULL,
+  USParkvec = NULL,
+  worldCountryvec = NULL,
+  mapWindow = NULL,
+  cropbox = NULL,
+  parkDir = NULL,
+  mapbuffer = 0,
+  mapmergebuffer = 0,
   maxrastercells = 2.5e+08,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
-  year = 2017, resstr = "_1arc_v3_bil")
+  year = 2017,
+  resstr = "_1arc_v3_bil"
+)
 }
 \arguments{
 \item{rasterFileSetName}{names of saved raster data files}

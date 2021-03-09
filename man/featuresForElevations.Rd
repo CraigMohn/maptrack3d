@@ -5,16 +5,32 @@
 \title{create and save the layers of a rasterStack containing the feature data for 
   an elevation raster}
 \usage{
-featuresForElevations(rasterFileSetName, rasterDir, shapefileDir = NULL,
-  USStatevec = NULL, CAProvincevec = NULL,
-  featureDataSource = "Shapefiles", writeShapefiles = TRUE,
-  includeAllRoads = FALSE, year = 2017, zeroBufferTowns = FALSE,
+featuresForElevations(
+  rasterFileSetName,
+  rasterDir,
+  shapefileDir = NULL,
+  USStatevec = NULL,
+  CAProvincevec = NULL,
+  featureDataSource = "Shapefiles",
+  writeShapefiles = TRUE,
+  includeAllRoads = FALSE,
+  year = 2017,
+  zeroBufferTowns = FALSE,
   zeroBufferWater = FALSE,
   workProj4 = "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0",
-  mapbuffer = 0, mapmergebuffer = 0, sliceFeatureBuffer = 0,
-  maxRasterize = 1e+05, polyClean = FALSE, polySimplify = 0,
-  polyMethod = "vis", polyWeighting = 0.85, polySnapInt = 1e-04,
-  silent = FALSE, noisy = FALSE, ...)
+  mapbuffer = 0,
+  mapmergebuffer = 0,
+  sliceFeatureBuffer = 0,
+  maxRasterize = 1e+05,
+  polyClean = FALSE,
+  polySimplify = 0,
+  polyMethod = "vis",
+  polyWeighting = 0.85,
+  polySnapInt = 1e-04,
+  silent = FALSE,
+  noisy = FALSE,
+  ...
+)
 }
 \arguments{
 \item{rasterFileSetName}{vector of names of saved raster data files}
@@ -56,7 +72,7 @@ boundary inconsistencies}
 \item{sliceFeatureBuffer}{numeric value to expand the extent of the area
 used to estrict features befire rasterization}
 
-\item{maxRasterize}{number of items for calls to velox$rasterize}
+\item{maxRasterize}{number of items for calls to rasterize}
 
 \item{polyClean}{fix topology errors}
 
